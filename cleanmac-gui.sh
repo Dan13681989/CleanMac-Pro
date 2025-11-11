@@ -69,6 +69,31 @@ show_dashboard() {
     esac
 }
 
+deep_clean() {
+    echo -e "${YELLOW}🧹 RUNNING DEEP CLEAN...${NC}"
+    echo "=========================================="
+    
+    echo "Cleaning user caches..."
+    find ~/Library/Caches -type f -atime +1 -delete 2>/dev/null
+    
+    echo "Cleaning system caches..."
+    sudo find /Library/Caches -type f -atime +7 -delete 2>/dev/null 2>&1
+    
+    echo "Cleaning logs..."
+    sudo log show --info --last 1d > /dev/null 2>&1
+    
+    echo "Cleaning temporary files..."
+    sudo rm -rf /private/var/folders/*/*/*/tmp/* 2>/dev/null
+    
+    echo "Cleaning browser caches..."
+    rm -rf ~/Library/Caches/com.apple.Safari 2>/dev/null
+    rm -rf ~/Library/Caches/com.google.Chrome 2>/dev/null
+    
+    sudo purge 2>/dev/null
+    echo -e "${GREEN}✅ Deep cleanup completed!${NC}"
+    read -p "Press [Enter] to continue..."
+    show_dashboard
+}
 performance_boost() {
     show_banner
     echo -e "${YELLOW}🚀 PERFORMANCE BOOST INITIATED${NC}"

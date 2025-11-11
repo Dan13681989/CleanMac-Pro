@@ -1,45 +1,54 @@
 #!/bin/bash
-# CleanMac Pro Battery Health Monitor
+# CleanMac Pro Battery Health Monitor - Fixed Version
 
 check_battery_health() {
     echo "🔋 BATTERY HEALTH REPORT"
     echo "=========================================="
     
-    # Get battery information
-    battery_info=$(system_profiler SPPowerDataType | grep -A 10 "Battery Information")
+    # Get battery information with better error handling
+    battery_info=$(system_profiler SPPowerDataType 2>/dev/null)
     
-    # Cycle count
+    # Cycle count with fallback
     cycle_count=$(echo "$battery_info" | grep "Cycle Count" | awk '{print $3}')
-    echo -e "${CYAN}🔄 Cycle Count:${NC} $cycle_count"
+    if [ -z "$cycle_count" ]; then
+        cycle_count="Unknown"
+    fi
+    echo "🔄 Cycle Count: $cycle_count"
     
-    # Condition
+    # Condition with fallback
     condition=$(echo "$battery_info" | grep "Condition" | cut -d: -f2 | sed 's/^ *//')
-    echo -e "${CYAN}📊 Condition:${NC} $condition"
+    if [ -z "$condition" ]; then
+        condition="Unknown"
+    fi
+    echo "📊 Condition: $condition"
     
-    # Maximum capacity
+    # Maximum capacity with fallback
     max_capacity=$(echo "$battery_info" | grep "Maximum Capacity" | awk '{print $3}')
-    echo -e "${CYAN}📈 Maximum Capacity:${NC} $max_capacity%"
+    if [ -z "$max_capacity" ]; then
+        max_capacity="Unknown"
+    fi
+    echo "📈 Maximum Capacity: $max_capacity%"
     
     # Charging status
-    charging=$(pmset -g batt | grep -o "AC Power\|Battery Power")
+    charging=$(pmset -g batt | grep -o "AC Power\|Battery Power" | head -1)
     if [ "$charging" = "AC Power" ]; then
-        echo -e "${CYAN}⚡ Status:${NC} Charging"
+        echo "⚡ Status: Charging"
     else
-        echo -e "${CYAN}⚡ Status:${NC} On Battery"
+        echo "⚡ Status: On Battery"
     fi
     
     # Battery percentage
-    battery_percent=$(pmset -g batt | grep -o "[0-9]*%" | sed 's/%//')
-    echo -e "${CYAN}📊 Current Charge:${NC} $battery_percent%"
+    battery_percent=$(pmset -g batt | grep -o "[0-9]*%" | sed 's/%//' | head -1)
+    echo "📊 Current Charge: $battery_percent%"
     
-    # Health recommendations
+    # Health recommendations (only if we have numeric values)
     echo ""
-    echo -e "${YELLOW}💡 BATTERY HEALTH TIPS:${NC}"
-    if [ "$cycle_count" -gt 1000 ]; then
+    echo "💡 BATTERY HEALTH TIPS:"
+    if [[ "$cycle_count" =~ ^[0-9]+$ ]] && [ "$cycle_count" -gt 1000 ]; then
         echo "⚠️  High cycle count - consider battery replacement"
     fi
     
-    if [ "$max_capacity" -lt 80 ]; then
+    if [[ "$max_capacity" =~ ^[0-9]+$ ]] && [ "$max_capacity" -lt 80 ]; then
         echo "⚠️  Battery capacity below 80% - consider replacement"
     fi
     
@@ -52,27 +61,18 @@ optimize_battery() {
     echo "⚡ OPTIMIZING BATTERY SETTINGS"
     echo "=========================================="
     
-    # Enable power nap
-    sudo pmset -a powernap 1
-    echo -e "${GREEN}✅ Power nap enabled${NC}"
+    sudo pmset -a powernap 1 2>/dev/null && echo "✅ Power nap enabled"
+    sudo pmset -a displaysleep 10 2>/dev/null && echo "✅ Display sleep set to 10 minutes"
+    sudo pmset -a disksleep 10 2>/dev/null && echo "✅ Disk sleep enabled"
     
-    # Set display sleep time
-    sudo pmset -a displaysleep 10
-    echo -e "${GREEN}✅ Display sleep set to 10 minutes${NC}"
-    
-    # Put hard disks to sleep when possible
-    sudo pmset -a disksleep 10
-    echo -e "${GREEN}✅ Disk sleep enabled${NC}"
-    
-    # Slightly reduce brightness
-    osascript -e 'tell application "System Events" to key code 145'
-    echo -e "${GREEN}✅ Brightness reduced${NC}"
-    
-    echo -e "${BLUE}🎉 Battery optimization complete!${NC}"
+    echo "🎉 Battery optimization complete!"
 }
 
 case "${1:-}" in
     "--check") check_battery_health ;;
     "--optimize") optimize_battery ;;
-    *) echo "Usage: $0 --check | --optimize" ;;
+    *) 
+        echo "Usage: $0 --check | --optimize"
+        echo "Example: $0 --check"
+        ;;
 esac
