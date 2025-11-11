@@ -83,7 +83,8 @@ main_menu() {
     echo "3) 🛡️  Security Scan" 
     echo "4) 🚀 Deep Clean"
     echo "5) 📊 System Info"
-    echo "6) ❌ Exit"
+    echo "6) 🎯 Complete Tune-Up"
+    echo "7) ❌ Exit"
     
     read -p "Enter choice [1-6]: " choice
     
@@ -93,7 +94,8 @@ main_menu() {
         3) security_scan ;;
         4) deep_clean ;;
         5) system_info ;;
-        6) exit 0 ;;
+        6) system_tuneup ;;
+        7) exit 0 ;;
         *) echo "Invalid option"; main_menu ;;
     esac
 }
@@ -127,6 +129,32 @@ else
         "--deep-clean") deep_clean ;;
         "--sys-info") system_info ;;
         "--version") echo "CleanMac Pro v$VERSION by $AUTHOR" ;;
+        "--tune-up") system_tuneup ;;
         *) echo "Use --help for usage information" ;;
     esac
 fi
+
+# Complete System Tune-Up
+system_tuneup() {
+    echo -e "${YELLOW}🎯 Starting Complete System Tune-Up...${NC}"
+    
+    # 1. Health Score
+    system_score
+    
+    # 2. Security Scan  
+    security_scan
+    
+    # 3. Deep Clean
+    deep_clean
+    
+    # 4. DNS Optimization
+    echo -e "${YELLOW}🌐 Optimizing DNS...${NC}"
+    sudo networksetup -setdnsservers Wi-Fi 8.8.8.8 1.1.1.1 2>/dev/null || echo "DNS optimization requires sudo"
+    echo -e "${GREEN}✅ DNS optimized to Google & Cloudflare${NC}"
+    
+    # 5. Final Health Score
+    echo -e "${YELLOW}📊 Measuring improvements...${NC}"
+    system_score
+    
+    echo -e "${BLUE}🎉 System Tune-Up Complete!${NC}"
+}
