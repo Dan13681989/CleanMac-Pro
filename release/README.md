@@ -72,7 +72,3 @@ CleanMac/
 MIT License - see LICENSE for details.
 
 Maintained by Dan
-
-## 🔄 Merge Note
-This repository now combines features from both CleanMac and CleanMac-Pro, 
-providing the most comprehensive macOS optimization toolkit available.
