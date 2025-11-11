@@ -84,7 +84,10 @@ main_menu() {
     echo "4) 🚀 Deep Clean"
     echo "5) 📊 System Info"
     echo "6) 🎯 Complete Tune-Up"
-    echo "7) ❌ Exit"
+    echo "7) 🖥️ GUI Interface"
+    echo "8) 🌐 Network Optimizer"
+    echo "9) 🔋 Battery Health"
+    echo "0) ⚙️ Advanced Settings"    echo "7) ❌ Exit"
     
     read -p "Enter choice [1-6]: " choice
     
@@ -95,7 +98,10 @@ main_menu() {
         4) deep_clean ;;
         5) system_info ;;
         6) system_tuneup ;;
-        7) exit 0 ;;
+        7) ./cleanmac-gui.sh ;;
+        8) ./network-optimizer.sh --optimize ;;
+        9) ./battery-health.sh --check ;;
+        0) show_advanced_settings ;;\        7) exit 0 ;;
         *) echo "Invalid option"; main_menu ;;
     esac
 }
@@ -157,4 +163,36 @@ system_tuneup() {
     system_score
     
     echo -e "${BLUE}🎉 System Tune-Up Complete!${NC}"
+}
+
+show_advanced_settings() {
+    echo -e "${YELLOW}⚙️ ADVANCED SETTINGS${NC}"
+    echo "=========================================="
+    echo "1) 🕒 Schedule Daily Maintenance"
+    echo "2) 🌐 Run Network Speed Test"
+    echo "3) 🔋 Optimize Battery Settings"
+    echo "4) 📊 Generate System Report"
+    echo "5) 🔙 Back to Main Menu"
+    
+    read -p "Select option [1-5]: " choice
+    case $choice in
+        1) ./scheduler.sh --setup-schedule ;;
+        2) ./network-optimizer.sh --speed-test ;;
+        3) ./battery-health.sh --optimize ;;
+        4) generate_system_report ;;
+        5) main_menu ;;
+        *) show_advanced_settings ;;
+    esac
+}
+
+generate_system_report() {
+    echo -e "${YELLOW}📊 GENERATING SYSTEM REPORT${NC}"
+    echo "=========================================="
+    echo "Report generated on: $(date)" > system-report.txt
+    echo "System: $(sw_vers -productName) $(sw_vers -productVersion)" >> system-report.txt
+    echo "Hardware: $(sysctl -n hw.model)" >> system-report.txt
+    echo "Processor: $(sysctl -n machdep.cpu.brand_string)" >> system-report.txt
+    echo "Memory: $(sysctl -n hw.memsize | awk '{print $0/1073741824 " GB"}')" >> system-report.txt
+    echo "Disk Usage: $(df / | grep / | awk '{print $5}')" >> system-report.txt
+    echo "System Report saved to: system-report.txt"
 }
