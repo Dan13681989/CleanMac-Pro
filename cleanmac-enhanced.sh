@@ -1,32 +1,80 @@
 #!/bin/bash
-# CleanMac Pro v2.2 - With KILLER Feature
 
-# ... (your existing code) ...
+# CleanMac Pro Enhanced v4.0
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+NC='\033[0m'
 
-# NEW: System Tune-Up Mode
-system_tuneup() {
-    echo -e "${YELLOW}🎯 Starting Complete System Tune-Up...${NC}"
+show_dashboard() {
+    clear
+    echo -e "${PURPLE}"
+    echo "=========================================="
+    echo "        CLEANMAC PRO ENHANCED v4.0"
+    echo "        AI-Powered macOS Suite"
+    echo "=========================================="
+    echo -e "${NC}"
     
-    # 1. Health Score
-    system_score
+    # Live AI-powered insights
+    echo -e "${CYAN}🤖 AI SYSTEM INSIGHTS${NC}"
+    echo "=========================================="
     
-    # 2. Security Scan  
-    security_scan
+    # Smart system analysis
+    cpu_usage=$(top -l 1 | grep "CPU usage" | awk '{print $3}' | sed 's/%//')
+    memory_free=$(memory_pressure 2>/dev/null | grep "System-wide memory free percentage:" | awk '{print $5}' | tr -d '%')
     
-    # 3. Deep Clean
-    deep_clean
+    echo -e "🖥️  CPU: ${cpu_usage}%"
+    echo -e "🧠 Memory Free: ${memory_free}%"
     
-    # 4. DNS Optimization
-    echo -e "${YELLOW}🌐 Optimizing DNS...${NC}"
-    networksetup -setdnsservers Wi-Fi 8.8.8.8 1.1.1.1
-    echo -e "${GREEN}✅ DNS optimized to Google & Cloudflare${NC}"
-    
-    # 5. Final Health Score
-    echo -e "${YELLOW}📊 Measuring improvements...${NC}"
-    system_score
-    
-    echo -e "${BLUE}🎉 System Tune-Up Complete!${NC}"
+    # AI recommendations
+    if [ "$cpu_usage" -gt 70 ]; then
+        echo -e "🎯 AI Tip: ${YELLOW}High CPU - Try performance boost${NC}"
+    elif [ "$memory_free" -lt 20 ]; then
+        echo -e "🎯 AI Tip: ${YELLOW}Low memory - Run quick clean${NC}"
+    else
+        echo -e "🎯 AI Tip: ${GREEN}System optimal${NC}"
+    fi
+    echo ""
 }
 
-# Update menu option
-# Add "7) 🎯 Complete Tune-Up" to your menu
+main_menu() {
+    while true; do
+        show_dashboard
+        echo -e "${CYAN}🚀 ENHANCED ACTIONS${NC}"
+        echo "=========================================="
+        echo "1) 🧹 Quick Clean"
+        echo "2) 🚀 Performance Boost" 
+        echo "3) 🛡️  Security Scan"
+        echo "4) 🤖 AI Optimization"
+        echo "5) 🔒 Malware Scanner"
+        echo "6) 📊 Health Dashboard"
+        echo "7) 🎨 Launch GUI Version"
+        echo "8) ❌ Exit"
+        echo ""
+        
+        read -p "Select option [1-8]: " choice
+        case $choice in
+            1) ./cleanmac.sh --clean ;;
+            2) ./cleanmac.sh --performance ;;
+            3) ./cleanmac.sh --security ;;
+            4) ./ai-optimizer.sh --optimize ;;
+            5) ./malware-scanner.sh --scan ;;
+            6) ./health-dashboard.sh --report ;;
+            7) ./cleanmac-gui.sh ;;
+            8) 
+                echo -e "${GREEN}👋 Thank you for using CleanMac Pro Enhanced!${NC}"
+                exit 0 
+                ;;
+            *) 
+                echo -e "${RED}Invalid option. Please try again.${NC}"
+                sleep 1
+                ;;
+        esac
+    done
+}
+
+# Start enhanced version
+main_menu
