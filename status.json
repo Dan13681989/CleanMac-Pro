@@ -1,0 +1,17 @@
+{
+    "system": {
+        "hostname": "Hootans-MacBook-Pro.local",
+        "timestamp": "2025-11-12T21:54:05+03:30", 
+        "uptime": "27 mins"
+    },
+    "metrics": {
+        "cpu_usage": "18.75%",
+        "memory_free": "80%",
+        "disk_usage": "7%",
+        "battery": "100%"
+    },
+    "maintenance": {
+        "last_run": "Recent",
+        "security_status": "Active"
+    }
+}

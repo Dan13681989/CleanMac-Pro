@@ -13,8 +13,8 @@ check_permissions() {
         SECURITY_SCORE=$((SECURITY_SCORE - 5))
     fi
     
-    # Check for suspicious patterns
-    if grep -q "rm -rf /" "$script" 2>/dev/null; then
+    # Check for suspicious patterns (exclude this script itself)
+    if [[ "$script" != *"security-check.sh" ]] && grep -q "rm -rf /" "$script" 2>/dev/null; then
         ISSUES+=("Dangerous pattern in: $script")
         SECURITY_SCORE=$((SECURITY_SCORE - 20))
     fi

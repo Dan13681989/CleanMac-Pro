@@ -9,13 +9,13 @@ run_benchmark() {
     local command=$2
     
     echo "Running: $test_name..."
-    local start_time=$(date +%s%N)
+    local start_time=$(python -c 'import time; print(int(time.time() * 1000))' 2>/dev/null || date +%s000)
     
     # Run command, suppressing output
     eval "$command" > /dev/null 2>&1
     
-    local end_time=$(date +%s%N)
-    local duration=$(( (end_time - start_time) / 1000000 ))
+    local end_time=$(python -c 'import time; print(int(time.time() * 1000))' 2>/dev/null || date +%s000)
+    local duration=$((end_time - start_time))
     
     echo "  ⏱️  Duration: ${duration}ms" | tee -a "$BENCHMARK_LOG"
     echo "$test_name: ${duration}ms" >> "$BENCHMARK_LOG"
