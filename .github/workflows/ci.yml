@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Test installation
+      run: |
+        chmod +x install-commands.sh
+        ./install-commands.sh
+        
+    - name: Test commands
+      run: |
+        ./cleanmac-dashboard
+        echo "✅ Basic functionality test passed"
+        
+    - name: Security scan test
+      run: |
+        ./enterprise-features/security-check.sh
+        echo "✅ Security scan test passed"

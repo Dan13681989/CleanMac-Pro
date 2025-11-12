@@ -1,33 +1,34 @@
-# 🏢 CleanMac Pro Enterprise Edition
+# CleanMac Pro Enterprise
 
-**Advanced macOS System Management & Monitoring Platform**
+🚀 Professional macOS cleanup and system management tool for enterprise environments.
 
-## 🚀 Features
+## Features
 
-### Enterprise Features
-- 📊 **Real-time Dashboard** - System metrics & health monitoring
-- 📈 **Advanced Analytics** - Performance trends & reporting  
-- 🔔 **Smart Alert System** - Proactive issue detection
-- 🌐 **Remote Monitoring** - Web-based status access
-- 🎛️ **Control Panel** - Unified management interface
+- 📊 Real-time system dashboard
+- 🛡️ Security auditing and scanning  
+- 🧹 Automated cleanup routines
+- 📈 Advanced system analytics
+- 🌐 Remote monitoring capabilities
+- 🏆 Health scoring system
 
-## 🛠️ Quick Start
+## Quick Start
 
-\`\`\`bash
-# Deploy enterprise features
-./enterprise-features/cleanmac-enterprise-control.sh
+```bash
+# Clone and install
+git clone https://github.com/Dan13681989/CleanMac-Pro.git
+cd CleanMac-Pro
+./install-commands.sh
 
-# Run dashboard
-./enterprise-features/cleanmac-enterprise-dashboard.sh
-\`\`\`
+# Available commands
+cleanmac-dashboard          # System overview
+cleanmac-enterprise         # Control panel
+cleanmac-security-scan      # Security audit
+cleanmac-clean-now          # Quick cleanup
+Requirements
 
-## 📁 Project Structure
+macOS 10.14 or later
+Bash shell
+sudo privileges (for some features)
+Contributing
 
-\`\`\`
-CleanMac-Pro/
-├── enterprise-features/     # All enterprise scripts
-├── README.md               # Project documentation
-└── deploy scripts          # Setup utilities
-\`\`\`
-
-**⭐ Star this repo if you find it useful!**
+See CONTRIBUTING.md for guidelines.
