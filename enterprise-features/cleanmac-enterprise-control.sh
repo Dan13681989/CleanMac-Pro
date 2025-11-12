@@ -1,9 +1,12 @@
 #!/bin/bash
 
+# Record usage analytics
+"$HOME/CleanMac-Pro/enterprise-features/usage-analytics.sh" 2>/dev/null
+
 show_menu() {
     echo ""
-    echo "🎛️ CLEANMAC PRO ENTERPRISE CONTROL PANEL"
-    echo "========================================"
+    echo "🎛️ CLEANMAC PRO ENTERPRISE ULTIMATE v2.0.0"
+    echo "=========================================="
     echo "1. 📊 Enterprise Dashboard"
     echo "2. 📈 Advanced Analytics" 
     echo "3. 🔔 Enhanced Alerts"
@@ -19,13 +22,15 @@ show_menu() {
     echo "13. 💾 Backup System"
     echo "14. 🔒 Security Hardening"
     echo "15. ⚡ Performance Benchmark"
-    echo "16. 🚪 Exit"
+    echo "16. 📊 Usage Analytics"
+    echo "17. 📖 User Guide"
+    echo "18. 🚪 Exit"
     echo ""
 }
 
 while true; do
     show_menu
-    read -p "Choose option (1-16): " choice
+    read -p "Choose option (1-18): " choice
     case $choice in
     1) ./cleanmac-dashboard ;;
     2) echo "📈 Generating analytics..."; echo "✅ Analytics complete" ;;
@@ -42,7 +47,9 @@ while true; do
     13) ./enterprise-features/backup-system.sh ;;
     14) ./enterprise-features/security-hardening.sh ;;
     15) ./enterprise-features/benchmark.sh ;;
-    16) echo "👋 Goodbye!"; exit 0 ;;
+    16) ./enterprise-features/usage-analytics.sh ;;
+    17) echo "Opening User Guide..."; open USER_GUIDE.md 2>/dev/null || echo "📖 User Guide: cat USER_GUIDE.md" ;;
+    18) echo "👋 Thank you for using CleanMac Pro Enterprise!"; exit 0 ;;
     *) echo "❌ Invalid option" ;;
     esac
     echo ""
