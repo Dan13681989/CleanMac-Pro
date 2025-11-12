@@ -11,7 +11,7 @@ echo "7. 🚪 Exit"
 echo ""
 read -p "Choose option (1-7): " choice
 
-case \$choice in
+case $choice in
     1) ./enterprise-features/cleanmac-enterprise-dashboard.sh ;;
     2) ./enterprise-features/cleanmac-analytics.sh ;;
     3) ./enterprise-features/cleanmac-enhanced-alerts.sh ;;
