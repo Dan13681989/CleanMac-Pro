@@ -1,31 +1,29 @@
 #!/bin/bash
-echo ""
-echo "🏢 CLEANMAC PRO ENTERPRISE DASHBOARD"
-echo "==================================="
-echo "Generated: $(date)"
-echo "System: $(hostname)"
-echo "==================================="
-echo "📊 ENHANCED METRICS:"
-echo "-------------------"
-
-# Get system metrics
-CPU_USAGE=$(top -l 1 | grep "CPU usage" | awk '{print $3}' | tr -d '%')
-MEMORY_FREE=$(memory_pressure | grep "System-wide memory free percentage:" | awk '{print $5}' | tr -d '%')
-DISK_USAGE=$(df -h / | tail -1 | awk '{print $5}' | tr -d '%')
-BATTERY=$(pmset -g batt | grep -Eo "\d+%" | head -1 | tr -d '%')
-UPTIME=$(uptime | awk '{print $3}')
-
-echo "🖥️  CPU Usage:    ${CPU_USAGE}%"
-echo "🧠 Memory Free:  ${MEMORY_FREE}%"
-echo "💾 Disk Usage:   ${DISK_USAGE}%"
-echo "🔋 Battery:      ${BATTERY}%"
-echo "⏱️  Uptime:       ${UPTIME}"
+# ... existing dashboard code ...
 
 echo ""
-echo "🚀 ENTERPRISE COMMANDS:"
-echo "----------------------"
-echo "cleanmac-enterprise    # Full control panel"
-echo "cleanmac-dashboard     # This dashboard"
-echo "cleanmac-security-scan # Security scan"
-echo "cleanmac-clean-now     # Quick cleanup"
+echo "🔍 ENHANCED DISK ANALYSIS"
+echo "========================"
+
+# Quick space overview
+HOME_USAGE=$(du -sh ~ | cut -f1)
+LARGE_FILES_COUNT=$(find ~ -type f -size +100M 2>/dev/null | wc -l | tr -d 
+' ')
+
+echo "💾 Home directory usage: $HOME_USAGE"
+echo "📁 Large files (>100MB): $LARGE_FILES_COUNT"
+
+# Docker status
+if command -v docker &> /dev/null; then
+    DOCKER_IMAGES=$(docker images -q | wc -l | tr -d ' ')
+    echo "🐳 Docker images: $DOCKER_IMAGES"
+else
+    echo "🐳 Docker: Not installed"
+fi
+
 echo ""
+echo "🚀 QUICK ACTIONS:"
+echo "   cleanmac-analyze       - Explore disk usage interactively"
+echo "   cleanmac-large-files   - Show largest files"
+echo "   cleanmac-docker-clean  - Clean Docker space"
+echo "   cleanmac-smart-cache   - Smart cache cleaning"

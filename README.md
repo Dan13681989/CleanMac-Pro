@@ -26,6 +26,15 @@ cleanmac-security-scan      # Security audit
 cleanmac-clean-now          # Quick cleanup
 Requirements
 
+## 🆕 Enhanced Features (Based on Real-World Analysis)
+
+### Advanced Disk Analysis
+```bash
+cleanmac-analyze          # Interactive disk exploration (ncdu)
+cleanmac-large-files      # Find files >100MB 
+cleanmac-docker-clean     # Docker space optimization
+cleanmac-smart-cache      # Intelligent cache cleaning
+
 macOS 10.14 or later
 Bash shell
 sudo privileges (for some features)

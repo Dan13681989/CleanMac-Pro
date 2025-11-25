@@ -1,0 +1,40 @@
+#!/bin/bash
+# CleanMac Pro - Docker Space Optimization
+# Cleans Docker containers, images, and volumes
+
+set -e
+
+echo "🐳 CleanMac Pro - Docker Space Optimization"
+echo "==========================================="
+
+if ! command -v docker &> /dev/null; then
+    echo "❌ Docker not found. Skipping Docker cleanup."
+    exit 0
+fi
+
+echo "📊 Current Docker disk usage:"
+docker system df
+
+echo ""
+echo "🧹 Cleaning Docker system..."
+echo "   This will remove:"
+echo "   - All stopped containers"
+echo "   - All unused networks"
+echo "   - All unused images"
+echo "   - All unused build cache"
+echo "   - All unused volumes"
+echo ""
+
+read -p "❓ Continue with Docker cleanup? (y/N): " -n 1 -r
+echo ""
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    docker system prune -a --volumes -f
+    echo "✅ Docker cleanup completed!"
+    
+    echo ""
+    echo "📊 Updated Docker disk usage:"
+    docker system df
+else
+    echo "❌ Docker cleanup cancelled."
+fi

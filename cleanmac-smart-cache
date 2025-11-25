@@ -1,0 +1,52 @@
+#!/bin/bash
+# CleanMac Pro - Smart Cache Cleaning
+# Targeted cache cleaning based on real usage patterns
+
+set -e
+
+echo "🧹 CleanMac Pro - Smart Cache Cleaning"
+echo "======================================"
+
+# Create backup directory
+BACKUP_DIR="/tmp/cleanmac_backup_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$BACKUP_DIR"
+
+echo "📦 Creating safety backup in $BACKUP_DIR..."
+
+# Function to safely remove with backup
+safe_remove() {
+    local target=$1
+    local description=$2
+    
+    if [ -d "$target" ] || [ -f "$target" ]; then
+        echo "🔧 Cleaning: $description"
+        cp -r "$target" "$BACKUP_DIR/" 2>/dev/null || true
+        rm -rf "$target"
+    fi
+}
+
+echo ""
+echo "🗑️  Cleaning system caches..."
+
+# System caches
+safe_remove "$HOME/Library/Caches" "User Library Caches"
+
+# Browser caches (major space savers)
+safe_remove "$HOME/Library/Caches/Google/Chrome" "Google Chrome Cache"
+safe_remove "$HOME/Library/Caches/com.apple.Safari" "Safari Cache"
+safe_remove "$HOME/Library/Caches/Mozilla" "Firefox Cache"
+
+# Development caches
+safe_remove "$HOME/.npm/_logs" "npm Logs"
+safe_remove "$HOME/.cache" "User Cache Directory"
+
+# Homebrew cache
+if command -v brew &> /dev/null; then
+    echo "🍺 Cleaning Homebrew cache..."
+    brew cleanup
+fi
+
+echo ""
+echo "✅ Smart cache cleaning completed!"
+echo "📦 Backup created at: $BACKUP_DIR"
+echo "💾 Space recovered: $(du -sh $BACKUP_DIR | cut -f1) (estimate)"

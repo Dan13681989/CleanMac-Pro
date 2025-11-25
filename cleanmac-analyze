@@ -1,0 +1,11 @@
+#!/bin/bash
+# CleanMac Pro - Advanced Disk Analysis
+set -e
+echo "🧠 CleanMac Pro - Advanced Disk Analysis"
+echo "========================================"
+if ! command -v ncdu &> /dev/null; then
+    echo "📦 Installing ncdu for advanced analysis..."
+    brew install ncdu
+fi
+echo "🔍 Starting interactive disk analysis..."
+ncdu --exclude /Volumes --exclude /System --exclude /proc ~
