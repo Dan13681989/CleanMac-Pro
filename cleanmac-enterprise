@@ -1,0 +1,31 @@
+#!/bin/bash
+# CleanMac Pro - Enterprise Control Panel
+# Enhanced with disk analysis features
+
+echo "🏢 CleanMac Pro Enterprise Control Panel"
+echo "========================================"
+echo ""
+
+echo "🚀 AVAILABLE COMMANDS:"
+echo "======================"
+echo "1. cleanmac-analyze       - Interactive disk analysis"
+echo "2. cleanmac-large-files   - Find large files" 
+echo "3. cleanmac-docker-clean  - Optimize Docker space"
+echo "4. cleanmac-smart-cache   - Intelligent cache cleaning"
+echo "5. cleanmac-dashboard     - System overview"
+echo "6. cleanmac-security-scan - Security audit"
+echo "7. cleanmac-clean-now     - Quick cleanup"
+
+echo ""
+echo "💡 ENTERPRISE FEATURES:"
+echo "======================"
+echo "• Advanced disk space analysis"
+echo "• Docker container optimization"
+echo "• Large file identification"
+echo "• Smart cache management"
+echo "• Security auditing"
+echo "• System health monitoring"
+
+echo ""
+echo "🔧 Run any command above or type 'exit'"
+echo ""

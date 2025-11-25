@@ -20,20 +20,23 @@ safe_remove() {
     
     if [ -d "$target" ] || [ -f "$target" ]; then
         echo "🔧 Cleaning: $description"
+        # Copy to backup then remove contents (not directory)
         cp -r "$target" "$BACKUP_DIR/" 2>/dev/null || true
-        rm -rf "$target"
+        # Remove contents but keep directory structure
+        find "$target" -mindepth 1 -exec rm -rf {} \; 2>/dev/null || true
     fi
 }
 
 echo ""
 echo "🗑️  Cleaning system caches..."
 
-# System caches
-safe_remove "$HOME/Library/Caches" "User Library Caches"
+# System caches - only remove contents, not directories
+echo "🔧 Cleaning: User Library Caches"
+find "$HOME/Library/Caches" -mindepth 1 -maxdepth 1 -exec rm -rf {} \; 2>/dev/null || true
 
 # Browser caches (major space savers)
 safe_remove "$HOME/Library/Caches/Google/Chrome" "Google Chrome Cache"
-safe_remove "$HOME/Library/Caches/com.apple.Safari" "Safari Cache"
+safe_remove "$HOME/Library/Caches/com.apple.Safari" "Safari Cache" 
 safe_remove "$HOME/Library/Caches/Mozilla" "Firefox Cache"
 
 # Development caches
@@ -49,4 +52,4 @@ fi
 echo ""
 echo "✅ Smart cache cleaning completed!"
 echo "📦 Backup created at: $BACKUP_DIR"
-echo "💾 Space recovered: $(du -sh $BACKUP_DIR | cut -f1) (estimate)"
+echo "💾 Space recovered: $(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1 || echo 'unknown')"
