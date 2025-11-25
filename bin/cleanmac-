@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "🔧 CleanMac Pro: cleanmac-"
+echo "This feature is available in CleanMac Pro Enterprise"
+echo "Run 'cleanmac-dashboard' for more options"

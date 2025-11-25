@@ -2,67 +2,33 @@
 
 > Professional macOS disk management and optimization suite
 
-[![Homebrew](https://img.shields.io/badge/Install-Homebrew-brightgreen)](https://brew.sh)
-[![Version](https://img.shields.io/badge/Version-2.2.0-blue)](https://github.com/Dan13681989/CleanMac-Pro/releases)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-
 ## ✨ Features
 
 - **📊 Interactive Dashboard** - System overview with analytics
 - **🔍 Advanced Disk Analysis** - Visual exploration with ncdu
-- **🗂️ Large File Detection** - Find space hogs efficiently  
+- **🗂️ Large File Detection** - Find space hogs efficiently
 - **🐳 Docker Optimization** - Clean containers and images
 - **🧹 Smart Cache Cleaning** - Safe cache removal with backups
-- **🔒 Security Scanning** - System security audit
-- **⚡ Performance Tools** - System benchmarking and optimization
 
-## 🚀 Quick Start
+## 🚀 Quick Installation
 
-### One-line Installation
+### Method 1: Homebrew (Recommended)
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/Dan13681989/CleanMac-Pro/main/install.sh)"
-Homebrew Installation
+brew install Dan13681989/tap/cleanmac-pro
+Method 2: Direct Download
 
 bash
-brew install Dan13681989/tap/cleanmac-pro
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Dan13681989/CleanMac-Pro/main/install.sh)"
 📋 Basic Usage
 
-Start with dashboard: cleanmac-dashboard
-Analyze disk usage: cleanmac-analyze
-Find large files: cleanmac-large-files
-Clean safely: cleanmac-smart-cache
-🛠️ For Developers
-
-Project Structure
-
-text
-CleanMac-Pro/
-├── bin/                 # Main executable scripts
-├── lib/                 # Shared utilities
-├── docs/               # Documentation
-├── tests/              # Test suites
-├── config/             # Configuration examples
-└── examples/           # Usage examples
-Development Setup
-
-bash
-git clone https://github.com/Dan13681989/CleanMac-Pro.git
-cd CleanMac-Pro
-chmod +x bin/*
-./tests/run-comprehensive-tests.sh
-🤝 Contributing
-
-We welcome contributions! Please see:
-
-CONTRIBUTING.md - Development guidelines
-CODE_OF_CONDUCT.md - Community standards
-ROADMAP.md - Future development plans
-📄 License
-
-MIT License - see LICENSE file for details.
-
+Start: cleanmac-dashboard - System overview
+Analyze: cleanmac-analyze - Explore disk usage
+Clean: cleanmac-large-files - Find large files
+Maintain: cleanmac-smart-cache - Monthly maintenance
 🆘 Support
 
 📖 Quick Start Guide
 🐛 Issue Tracker
-💬 Discussions
+📄 License
+
+MIT License - see LICENSE file for details.

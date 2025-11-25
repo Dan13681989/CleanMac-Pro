@@ -14,7 +14,18 @@ if ! command -v brew &> /dev/null; then
 fi
 
 # Install via Homebrew
+echo "📥 Installing via Homebrew..."
 brew install Dan13681989/tap/cleanmac-pro
 
-echo "🎉 Installation complete!"
-echo "💡 Run 'cleanmac-dashboard' to get started"
+if [ $? -eq 0 ]; then
+    echo "🎉 Installation complete!"
+    echo "💡 Run 'cleanmac-dashboard' to get started"
+else
+    echo "❌ Installation failed. Trying alternative method..."
+    
+    # Alternative: manual installation
+    echo "📥 Trying manual installation..."
+    sudo cp bin/* /usr/local/bin/
+    echo "🎉 Manual installation complete!"
+    echo "💡 Run 'cleanmac-dashboard' to get started"
+fi
