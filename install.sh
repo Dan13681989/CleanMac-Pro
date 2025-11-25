@@ -1,27 +1,20 @@
 #!/bin/bash
-echo "🏢 CleanMac Pro Enterprise Installation"
-echo "======================================"
+echo "🚀 Installing CleanMac Pro Enterprise..."
+echo "📦 This will install:"
+echo "   • cleanmac-dashboard     - System overview"
+echo "   • cleanmac-analyze       - Disk analysis"
+echo "   • cleanmac-large-files   - Space hog finder"
+echo "   • cleanmac-smart-cache   - Cache cleaning"
+echo "   • cleanmac-docker-clean  - Docker optimization"
 
-# Check if running on macOS
-if [ "$(uname)" != "Darwin" ]; then
-    echo "❌ This script only works on macOS"
+# Check for Homebrew
+if ! command -v brew &> /dev/null; then
+    echo "❌ Homebrew required. Install from: https://brew.sh"
     exit 1
 fi
 
-# Create necessary directories
-mkdir -p ~/.cleanmac/{analytics,remote,logs}
+# Install via Homebrew
+brew install Dan13681989/tap/cleanmac-pro
 
-# Copy scripts to proper locations
-echo "📦 Installing enterprise features..."
-cp -r enterprise-features/* ~/ 2>/dev/null || true
-
-# Make scripts executable
-chmod +x enterprise-features/*.sh
-chmod +x *.sh
-
-# Create symlinks for global access
-ln -sf ~/CleanMac-Pro/enterprise-features/cleanmac-enterprise-control.sh /usr/local/bin/cleanmac-enterprise 2>/dev/null || true
-ln -sf ~/CleanMac-Pro/enterprise-features/cleanmac-enterprise-dashboard.sh /usr/local/bin/cleanmac-dashboard 2>/dev/null || true
-
-echo "✅ Installation complete!"
-echo "🚀 Usage: cleanmac-enterprise"
+echo "🎉 Installation complete!"
+echo "💡 Run 'cleanmac-dashboard' to get started"

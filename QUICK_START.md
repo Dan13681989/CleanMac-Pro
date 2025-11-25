@@ -1,16 +1,32 @@
-# CleanMac-Pro Quick Start
+# 🚀 CleanMac Pro Quick Start
 
-## 🆕 Enhanced Features
-- `cleanmac-analyze` - Interactive disk exploration
-- `cleanmac-large-files` - Find space hogs (>100MB)
-- `cleanmac-docker-clean` - Docker optimization
-- `cleanmac-smart-cache` - Intelligent cleaning
+## One-Line Installation
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Dan13681989/CleanMac-Pro/main/install.sh)"
+🆕 Enhanced Features
 
-## 📋 Basic Workflow
-1. `cleanmac-dashboard` - System overview
-2. `cleanmac-analyze` - Explore disk usage
-3. `cleanmac-large-files` - Identify large files
-4. `cleanmac-smart-cache` - Monthly maintenance
+cleanmac-dashboard - System overview with analytics
+cleanmac-analyze - Interactive disk exploration
+cleanmac-large-files - Find space hogs (>100MB)
+cleanmac-docker-clean - Docker optimization
+cleanmac-smart-cache - Intelligent cache cleaning
+📋 Basic Workflow
 
-## 🐳 Docker Users
-- `cleanmac-docker-clean` - Reclaim container space
+Start: cleanmac-dashboard - System overview
+Analyze: cleanmac-analyze - Explore disk usage
+Clean: cleanmac-large-files - Identify large files
+Maintain: cleanmac-smart-cache - Monthly maintenance
+🐳 Docker Users
+
+cleanmac-docker-clean - Reclaim container space
+Automatic Docker image analysis
+🔧 Advanced Usage
+
+Enterprise features for IT teams
+Security scanning capabilities
+Performance benchmarking
+Automated backup systems
+📞 Support
+
+GitHub: https://github.com/Dan13681989/CleanMac-Pro
+Issues: https://github.com/Dan13681989/CleanMac-Pro/issues

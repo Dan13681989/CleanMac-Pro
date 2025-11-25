@@ -1,43 +1,68 @@
-# CleanMac Pro Enterprise
+# 🚀 CleanMac Pro Enterprise
 
-🚀 Professional macOS cleanup and system management tool for enterprise environments.
+> Professional macOS disk management and optimization suite
 
-## Features
+[![Homebrew](https://img.shields.io/badge/Install-Homebrew-brightgreen)](https://brew.sh)
+[![Version](https://img.shields.io/badge/Version-2.2.0-blue)](https://github.com/Dan13681989/CleanMac-Pro/releases)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-- 📊 Real-time system dashboard
-- 🛡️ Security auditing and scanning  
-- 🧹 Automated cleanup routines
-- 📈 Advanced system analytics
-- 🌐 Remote monitoring capabilities
-- 🏆 Health scoring system
+## ✨ Features
 
-## Quick Start
+- **📊 Interactive Dashboard** - System overview with analytics
+- **🔍 Advanced Disk Analysis** - Visual exploration with ncdu
+- **🗂️ Large File Detection** - Find space hogs efficiently  
+- **🐳 Docker Optimization** - Clean containers and images
+- **🧹 Smart Cache Cleaning** - Safe cache removal with backups
+- **🔒 Security Scanning** - System security audit
+- **⚡ Performance Tools** - System benchmarking and optimization
 
+## 🚀 Quick Start
+
+### One-line Installation
 ```bash
-# Clone and install
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Dan13681989/CleanMac-Pro/main/install.sh)"
+Homebrew Installation
+
+bash
+brew install Dan13681989/tap/cleanmac-pro
+📋 Basic Usage
+
+Start with dashboard: cleanmac-dashboard
+Analyze disk usage: cleanmac-analyze
+Find large files: cleanmac-large-files
+Clean safely: cleanmac-smart-cache
+🛠️ For Developers
+
+Project Structure
+
+text
+CleanMac-Pro/
+├── bin/                 # Main executable scripts
+├── lib/                 # Shared utilities
+├── docs/               # Documentation
+├── tests/              # Test suites
+├── config/             # Configuration examples
+└── examples/           # Usage examples
+Development Setup
+
+bash
 git clone https://github.com/Dan13681989/CleanMac-Pro.git
 cd CleanMac-Pro
-./install-commands.sh
+chmod +x bin/*
+./tests/run-comprehensive-tests.sh
+🤝 Contributing
 
-# Available commands
-cleanmac-dashboard          # System overview
-cleanmac-enterprise         # Control panel
-cleanmac-security-scan      # Security audit
-cleanmac-clean-now          # Quick cleanup
-Requirements
+We welcome contributions! Please see:
 
-## 🆕 Enhanced Features (Based on Real-World Analysis)
+CONTRIBUTING.md - Development guidelines
+CODE_OF_CONDUCT.md - Community standards
+ROADMAP.md - Future development plans
+📄 License
 
-### Advanced Disk Analysis
-```bash
-cleanmac-analyze          # Interactive disk exploration (ncdu)
-cleanmac-large-files      # Find files >100MB 
-cleanmac-docker-clean     # Docker space optimization
-cleanmac-smart-cache      # Intelligent cache cleaning
+MIT License - see LICENSE file for details.
 
-macOS 10.14 or later
-Bash shell
-sudo privileges (for some features)
-Contributing
+🆘 Support
 
-See CONTRIBUTING.md for guidelines.
+📖 Quick Start Guide
+🐛 Issue Tracker
+💬 Discussions

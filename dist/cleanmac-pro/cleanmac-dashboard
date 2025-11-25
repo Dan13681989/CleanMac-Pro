@@ -1,0 +1,63 @@
+#!/bin/bash
+# CleanMac Pro - System Dashboard
+# Enhanced with disk analysis features
+
+set -e
+
+echo ""
+echo "🚀 CleanMac Pro Enterprise Dashboard"
+echo "==================================="
+echo ""
+
+# System overview
+echo "📊 SYSTEM OVERVIEW"
+echo "=================="
+echo "💻 Hostname: $(hostname)"
+echo "🖥️  macOS: $(sw_vers -productVersion)"
+echo "👤 User: $(whoami)"
+echo "⏰ Uptime: $(uptime | awk -F'( |,|:)+' '{print $6,$7",",$8,"hours,",$9,"minutes."}')"
+
+echo ""
+echo "🔍 ENHANCED DISK ANALYSIS"
+echo "========================"
+
+# Quick space overview - FIXED the counting issue
+HOME_USAGE=$(du -sh ~ 2>/dev/null | cut -f1 || echo "unknown")
+LARGE_FILES_COUNT=$(find ~ -type f -size +100M 2>/dev/null | wc -l | awk '{print $1}')
+
+echo "💾 Home directory usage: $HOME_USAGE"
+echo "📁 Large files (>100MB): $LARGE_FILES_COUNT"
+
+# Docker status
+if command -v docker &> /dev/null; then
+    DOCKER_IMAGES=$(docker images -q 2>/dev/null | wc -l | awk '{print $1}')
+    echo "🐳 Docker images: $DOCKER_IMAGES"
+else
+    echo "🐳 Docker: Not installed"
+fi
+
+# NCDU availability
+if command -v ncdu &> /dev/null; then
+    echo "🔬 Disk analyzer: Available"
+else
+    echo "🔬 Disk analyzer: Not installed"
+fi
+
+echo ""
+echo "🚀 QUICK ACTIONS"
+echo "================"
+echo "   cleanmac-analyze       - Explore disk usage interactively"
+echo "   cleanmac-large-files   - Show largest files" 
+echo "   cleanmac-docker-clean  - Clean Docker space"
+echo "   cleanmac-smart-cache   - Smart cache cleaning"
+echo "   cleanmac-enterprise    - Full control panel"
+echo "   cleanmac-security-scan - Security audit"
+echo "   cleanmac-clean-now     - Quick cleanup"
+
+echo ""
+echo "💡 TIPS"
+echo "======"
+echo "• Run 'cleanmac-analyze' first to understand disk usage"
+echo "• Use 'cleanmac-large-files' to find space hogs"
+echo "• Run 'cleanmac-smart-cache' monthly for maintenance"
+echo "• Use 'cleanmac-docker-clean' if Docker is slow"
