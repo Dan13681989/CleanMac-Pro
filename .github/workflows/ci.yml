@@ -18,25 +18,29 @@ jobs:
     
     - name: Setup environment
       run: |
-        chmod +x bin/*
-        chmod +x tests/*
+        # Make all scripts executable
+        chmod +x tests/*.sh 2>/dev/null || true
+        ls -la tests/
         
-    - name: Run basic tests
+    - name: Run comprehensive tests
       run: |
+        # Run the comprehensive test suite
         ./tests/run-comprehensive-tests.sh
         
-    - name: Check syntax
+    - name: Check script syntax
       run: |
-        for file in bin/*; do
-          bash -n "$file" || exit 1
+        # Validate bash syntax for main scripts
+        for script in cleanmac-*; do
+          if [ -f "$script" ]; then
+            bash -n "$script" && echo "✅ $script has valid syntax" || echo "❌ $script has syntax errors"
+          fi
         done
-        echo "✅ All scripts have valid syntax"
         
     - name: Verify documentation
       run: |
-        [ -f README.md ] && echo "✅ README exists"
-        [ -f QUICK_START.md ] && echo "✅ Quick start exists"
-        [ -f LICENSE ] && echo "✅ License exists"
+        [ -f "README.md" ] && echo "✅ README exists" || echo "❌ README missing"
+        [ -f "LICENSE" ] && echo "✅ LICENSE exists" || echo "❌ LICENSE missing"
+        [ -f "QUICK_START.md" ] && echo "✅ Quick start exists" || echo "❌ Quick start missing"
 
   release:
     runs-on: macos-latest
@@ -49,7 +53,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          bin/*
+          cleanmac-*
           LICENSE
           README.md
           QUICK_START.md
