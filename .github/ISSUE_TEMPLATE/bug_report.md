@@ -1,8 +1,10 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report something that's not working
 title: '[BUG] '
 labels: bug
+assignees: ''
+
 ---
 
 **Describe the bug**
@@ -11,13 +13,4 @@ A clear and concise description of what the bug is.
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Run command '...'
-2. See error
-
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
-
-**macOS Version:**
- - Version: [e.g. 13.7.8]
+2. See error '...'

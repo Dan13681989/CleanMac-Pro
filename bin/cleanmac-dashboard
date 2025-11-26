@@ -1,8 +1,0 @@
-#!/bin/bash
-echo "🚀 CleanMac Pro Enterprise Dashboard"
-echo "==================================="
-echo ""
-echo "✅ CleanMac Pro is installed and working!"
-echo "💡 Run 'cleanmac-analyze' to explore disk usage"
-echo "💡 Run 'cleanmac-large-files' to find large files"
-echo "💡 Run 'cleanmac-smart-cache' to clean caches"
