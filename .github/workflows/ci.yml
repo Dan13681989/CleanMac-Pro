@@ -19,28 +19,26 @@ jobs:
     - name: Setup environment
       run: |
         # Make all scripts executable
-        chmod +x tests/*.sh 2>/dev/null || true
-        ls -la tests/
+        chmod +x tests/*.sh
+        chmod +x cleanmac-*
+        ls -la
+        
+    - name: Install dependencies
+      run: |
+        # Install required tools for testing
+        brew install ncdu tree
         
     - name: Run comprehensive tests
       run: |
         # Run the comprehensive test suite
         ./tests/run-comprehensive-tests.sh
         
-    - name: Check script syntax
-      run: |
-        # Validate bash syntax for main scripts
-        for script in cleanmac-*; do
-          if [ -f "$script" ]; then
-            bash -n "$script" && echo "✅ $script has valid syntax" || echo "❌ $script has syntax errors"
-          fi
-        done
-        
     - name: Verify documentation
       run: |
         [ -f "README.md" ] && echo "✅ README exists" || echo "❌ README missing"
         [ -f "LICENSE" ] && echo "✅ LICENSE exists" || echo "❌ LICENSE missing"
         [ -f "QUICK_START.md" ] && echo "✅ Quick start exists" || echo "❌ Quick start missing"
+        [ -f "docs/PLUGINS.md" ] && echo "✅ Plugins docs exist" || echo "❌ Plugins docs missing"
 
   release:
     runs-on: macos-latest
@@ -57,3 +55,4 @@ jobs:
           LICENSE
           README.md
           QUICK_START.md
+          docs/PLUGINS.md
