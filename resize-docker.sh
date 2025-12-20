@@ -1,0 +1,17 @@
+#!/bin/bash
+echo "🐳 Docker.raw Resize Helper"
+echo "==========================="
+echo ""
+echo "Current Docker.raw size:"
+ls -lh ~/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw
+echo ""
+echo "To resize Docker.raw:"
+echo "1. Make sure Docker Desktop is STOPPED"
+echo "2. Run: qemu-img resize ~/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw 64G"
+echo "3. Start Docker Desktop"
+echo ""
+echo "Or use Docker Desktop GUI:"
+echo "1. Open Docker Desktop"
+echo "2. Settings > Resources > Advanced"
+echo "3. Adjust 'Disk image size' slider"
+echo "4. Click 'Apply & Restart'"

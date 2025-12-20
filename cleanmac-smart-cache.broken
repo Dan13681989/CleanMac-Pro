@@ -1,0 +1,103 @@
+#!/bin/bash
+# CleanMac Pro - Smart Cache Cleaning
+# Targeted cache cleaning based on real usage patterns
+
+set -e
+
+echo "🧹 CleanMac Pro - Smart Cache Cleaning"
+# Parse command line arguments
+DRY_RUN=false
+for arg in "$@"
+do
+    case $arg in
+        -n|--dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [-n|--dry-run] [-h|--help]"
+            echo "  -n, --dry-run  Preview actions without deleting"
+            echo "  -h, --help     Show this help message"
+            exit 0
+            ;;
+    esac
+done
+echo "======================================"
+
+# Create backup directory
+# Allow user to override backup location via environment variable
+USER_BACKUP_DIR="${CLEANMAC_BACKUP_DIR:-}"
+if [ -n "$USER_BACKUP_DIR" ]; then
+    BACKUP_DIR="$USER_BACKUP_DIR/cleanmac_backup_$(date +%Y%m%d_%H%M%S)"
+else
+    BACKUP_DIR="/tmp/cleanmac_backup_$(date +%Y%m%d_%H%M%S)"
+fi
+BACKUP_DIR="/tmp/cleanmac_backup_$(date +%Y%m%d_%H%M%S)"
+if [ "$DRY_RUN" != true ]; then
+    mkdir -p "$BACKUP_DIR"
+fi
+
+echo "📦 Creating safety backup in $BACKUP_DIR..."
+
+DRY_RUN_ECHO=""
+if [ "$DRY_RUN" = true ]; then
+    DRY_RUN_ECHO="[DRY RUN] "
+fi
+
+# Function to safely remove with backup
+safe_remove() {
+    local target=$1
+    local description=$2
+    
+    if [ -d "$target" ] || [ -f "$target" ]; then
+        echo "${DRY_RUN_ECHO}🔧 Cleaning: $description"
+        # Copy to backup then remove contents (not directory)
+        if [ "$DRY_RUN" != true ]; then
+        cp -r "$target" "$BACKUP_DIR/" 2>/dev/null || true
+    fi
+        # Remove contents but keep directory structure
+        if [ "$DRY_RUN" = true ]; then
+        echo "    📁 Would backup and clear: $target"
+    else
+        find "$target" -mindepth 1 -exec rm -rf {} \; 2>/dev/null || true
+    fi
+    fi
+}
+
+echo ""
+echo "🗑️  Cleaning system caches..."
+
+# System caches - only remove contents, not directories
+echo "🔧 Cleaning: User Library Caches"
+if [ "$DRY_RUN" = true ]; then
+    echo "    📁 Would clear contents of: $HOME/Library/Caches/*"
+else
+    find "$HOME/Library/Caches" -mindepth 1 -maxdepth 1 -exec rm -rf {} \; 2>/dev/null || true
+fi
+
+# Browser caches (major space savers)
+safe_remove "$HOME/Library/Caches/Google/Chrome" "Google Chrome Cache"
+safe_remove "$HOME/Library/Caches/com.apple.Safari" "Safari Cache" 
+safe_remove "$HOME/Library/Caches/Mozilla" "Firefox Cache"
+
+# Development caches
+safe_remove "$HOME/.npm/_logs" "npm Logs"
+safe_remove "$HOME/.cache" "User Cache Directory"
+
+# Homebrew cache
+if command -v brew if command -v brew &> /dev/null; then> /dev/null; then
+    if [ "$DRY_RUN" = true ]; then
+        echo "🍺 Would clean Homebrew cache (dry-run)"
+    else
+    echo "🍺 Cleaning Homebrew cache..."
+    brew cleanup
+    fifi
+
+echo ""
+echo "✅ Smart cache cleaning completed!"
+if [ -n "$USER_BACKUP_DIR" ]; then
+    echo "📦 Backup created in user directory: $BACKUP_DIR"
+else
+    echo "📦 Backup created in TEMPORARY location: $BACKUP_DIR (will be deleted on reboot)"
+fi
+echo "💾 Space recovered: $(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1 || echo 'unknown')"

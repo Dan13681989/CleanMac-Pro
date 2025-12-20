@@ -1,0 +1,146 @@
+#!/bin/bash
+# CleanMac Pro - Smart Cache Cleaning
+# Targeted cache cleaning based on real usage patterns
+
+set -e
+
+echo "🧹 CleanMac Pro - Smart Cache Cleaning"
+echo "======================================"
+
+# Parse command line arguments
+DRY_RUN=false
+for arg in "$@"
+do
+    case $arg in
+        -n|--dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [-n|--dry-run] [-h|--help]"
+            echo "  -n, --dry-run  Preview actions without deleting"
+            echo "  -h, --help     Show this help message"
+            exit 0
+            ;;
+    esac
+done
+
+# ============================================================================
+# LOAD USER CONFIGURATION (if it exists)
+# ============================================================================
+CONFIG_FILE="${CLEANMAC_CONFIG:-$HOME/.cleanmac}"
+USER_INCLUDE_PATHS=()
+USER_EXCLUDE_PATHS=()
+
+if [ -f "$CONFIG_FILE" ]; then
+    echo "⚙️  Loading user configuration from: $CONFIG_FILE"
+    # Source the config file in a controlled way
+    while IFS= read -r line; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" ]] && continue
+        
+        # Parse INCLUDE_PATHS array
+        if [[ "$line" =~ ^INCLUDE_PATHS=\( ]]; then
+            while IFS= read -r path_line; do
+                [[ "$path_line" == ")" ]] && break
+                [[ "$path_line" =~ ^[[:space:]]*# ]] && continue
+                # Remove quotes and trim
+                cleaned_path=$(echo "$path_line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^['\"]//" -e "s/['\"]$//")
+                [ -n "$cleaned_path" ] && USER_INCLUDE_PATHS+=("$cleaned_path")
+            done
+        fi
+        
+        # Check for CLEANMAC_BACKUP_DIR override
+        if [[ "$line" =~ ^CLEANMAC_BACKUP_DIR= ]]; then
+            config_value=$(echo "$line" | cut -d'=' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^['\"]//" -e "s/['\"]$//")
+            [ -n "$config_value" ] && CLEANMAC_BACKUP_DIR="$config_value"
+        fi
+    done < "$CONFIG_FILE"
+fi
+
+# ============================================================================
+# Allow user to override backup location via environment variable
+USER_BACKUP_DIR="${CLEANMAC_BACKUP_DIR:-}"
+if [ -n "$USER_BACKUP_DIR" ]; then
+    BACKUP_DIR="$USER_BACKUP_DIR/cleanmac_backup_$(date +%Y%m%d_%H%M%S)"
+else
+    BACKUP_DIR="/tmp/cleanmac_backup_$(date +%Y%m%d_%H%M%S)"
+fi
+
+# Create backup directory only if not in dry-run
+if [ "$DRY_RUN" = true ]; then
+    echo "📦 [DRY RUN] Would create safety backup in $BACKUP_DIR..."
+else
+    mkdir -p "$BACKUP_DIR"
+    echo "📦 Creating safety backup in $BACKUP_DIR..."
+fi
+
+# Function to safely remove with backup
+safe_remove() {
+    local target=$1
+    local description=$2
+    
+    if [ -d "$target" ] || [ -f "$target" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            echo "🔧 [DRY RUN] Cleaning: $description"
+            echo "    📁 Would backup and clear: $target"
+        else
+            echo "🔧 Cleaning: $description"
+            # Copy to backup then remove contents (not directory)
+            cp -r "$target" "$BACKUP_DIR/" 2>/dev/null || true
+            # Remove contents but keep directory structure
+            find "$target" -mindepth 1 -exec rm -rf {} \; 2>/dev/null || true
+        fi
+    fi
+}
+
+echo ""
+echo "🗑️  Cleaning system caches..."
+
+# System caches - only remove contents, not directories
+if [ "$DRY_RUN" = true ]; then
+    echo "🔧 [DRY RUN] Cleaning: User Library Caches"
+    echo "    📁 Would clear contents of: $HOME/Library/Caches/*"
+else
+    echo "🔧 Cleaning: User Library Caches"
+    find "$HOME/Library/Caches" -mindepth 1 -maxdepth 1 -exec rm -rf {} \; 2>/dev/null || true
+fi
+
+# Browser caches (major space savers)
+safe_remove "$HOME/Library/Caches/Google/Chrome" "Google Chrome Cache"
+safe_remove "$HOME/Library/Caches/com.apple.Safari" "Safari Cache" 
+safe_remove "$HOME/Library/Caches/Mozilla" "Firefox Cache"
+
+# Development caches
+safe_remove "$HOME/.npm/_logs" "npm Logs"
+safe_remove "$HOME/.cache" "User Cache Directory"
+
+# Homebrew cache
+if command -v brew &> /dev/null; then
+    if [ "$DRY_RUN" = true ]; then
+        echo "🍺 Would clean Homebrew cache (dry-run)"
+    else
+        echo "🍺 Cleaning Homebrew cache..."
+        brew cleanup
+    fi
+fi
+
+echo ""
+echo "✅ Smart cache cleaning completed!"
+
+if [ "$DRY_RUN" = true ]; then
+    if [ -n "$USER_BACKUP_DIR" ]; then
+        echo "📦 [DRY RUN] Would create backup in: $BACKUP_DIR"
+    else
+        echo "📦 [DRY RUN] Would create TEMPORARY backup in: $BACKUP_DIR"
+    fi
+    echo "💾 Space that would be recovered: (dry run - no actual cleaning)"
+else
+    if [ -n "$USER_BACKUP_DIR" ]; then
+        echo "📦 Backup created in user directory: $BACKUP_DIR"
+    else
+        echo "📦 Backup created in TEMPORARY location: $BACKUP_DIR (will be deleted on reboot)"
+    fi
+    echo "💾 Space recovered: $(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1 || echo 'unknown')"
+fi

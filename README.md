@@ -1,34 +1,35 @@
-# 🚀 CleanMac Pro Enterprise
+# CleanMac-Pro
+Network optimization and system cleanup tools for macOS.
 
-> Professional macOS disk management and optimization suite
-
-## ✨ Features
-
-- **📊 Interactive Dashboard** - System overview with analytics
-- **🔍 Advanced Disk Analysis** - Visual exploration with ncdu
-- **🗂️ Large File Detection** - Find space hogs efficiently
-- **🐳 Docker Optimization** - Clean containers and images
-- **🧹 Smart Cache Cleaning** - Safe cache removal with backups
-
-## 🚀 Quick Installation
-
-### Method 1: Homebrew (Recommended)
+## Usage:
 ```bash
-brew install Dan13681989/tap/cleanmac-pro
-Method 2: Direct Download
+sudo ./scripts/network_optimizer.sh
+./scripts/system_cleanup.sh
+
+🚀 Network Optimization Module
+
+New Features Added:
+
+Network Optimizer: TCP tuning, DNS optimization, latency reduction
+System Cleanup: Cache clearing, disk space recovery
+Performance Monitor: Real-time network status tracking
+Quick Start:
 
 bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/Dan13681989/CleanMac-Pro/main/install.sh)"
-📋 Basic Usage
+# Run network optimization
+sudo ./scripts/network_optimizer.sh
 
-Start: cleanmac-dashboard - System overview
-Analyze: cleanmac-analyze - Explore disk usage
-Clean: cleanmac-large-files - Find large files
-Maintain: cleanmac-smart-cache - Monthly maintenance
-🆘 Support
+# Run system cleanup
+./scripts/system_cleanup.sh
 
-📖 Quick Start Guide
-🐛 Issue Tracker
-📄 License
+# Monitor network
+./scripts/network_monitor.sh
+Performance Results:
 
-MIT License - see LICENSE file for details.
+94 Mbps download/upload (hardware maximum)
+3.4ms local latency
+0% packet loss
+Professional-grade TCP optimization
+Based on comprehensive optimization session:
+
+All commands and configurations that achieved maximum network performance are documented in docs/network-optimization-guide.md
