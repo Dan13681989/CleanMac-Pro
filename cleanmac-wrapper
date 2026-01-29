@@ -1,0 +1,28 @@
+#!/bin/bash
+# CleanMac Pro Wrapper
+
+# Check for --help or --version
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    echo "CleanMac Pro v3.0.0"
+    echo "Usage: cleanmac [OPTION]"
+    echo "Options:"
+    echo "  --help, -h     Show this help"
+    echo "  --version, -v  Show version"
+    echo "  (no args)      Launch interactive dashboard"
+    exit 0
+fi
+
+if [ "$1" = "--version" ] || [ "$1" = "-v" ]; then
+    echo "CleanMac Pro v3.0.0"
+    exit 0
+fi
+
+# If other arguments, show error
+if [ $# -gt 0 ]; then
+    echo "Error: Unknown option '$1'"
+    echo "Try: cleanmac --help"
+    exit 1
+fi
+
+# No arguments, run interactive mode
+exec ./cleanmac-interactive

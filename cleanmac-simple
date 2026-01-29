@@ -1,0 +1,15 @@
+#!/bin/bash
+# Simple CleanMac Dashboard - All features working
+
+echo "🚀 CleanMac Pro - Simple Dashboard"
+echo "=================================="
+echo ""
+echo "Available tools:"
+echo "1. Quick Clean (cleanmac-smart-cache)"
+echo "2. Disk Analyze (cleanmac-analyze)" 
+echo "3. Large Files (cleanmac-large-files)"
+echo "4. Docker Clean (cleanmac-docker-clean)"
+echo "5. Security Scan (cleanmac-security-scan)"
+echo "6. Network Optimize (scripts/network_optimizer.sh)"
+echo ""
+echo "Run directly: ./tool-name"

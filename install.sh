@@ -1,60 +1,41 @@
 #!/bin/bash
+# CleanMac Pro Installer
 
-set -e
+echo "========================================"
+echo "   CleanMac Pro Installation"
+echo "========================================"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-echo -e "${GREEN}🚀 Installing CleanMac Pro...${NC}"
-echo ""
-
-# Check for macOS
-if [[ "$(uname)" != "Darwin" ]]; then
-    echo -e "${RED}❌ Error: This script is for macOS only${NC}"
+# Check if we're in the right directory
+if [ ! -f "cleanmac-interactive" ]; then
+    echo "ERROR: Please run from CleanMac-Pro directory"
     exit 1
 fi
 
-# Create temp directory
-TEMP_DIR=$(mktemp -d)
-cd "$TEMP_DIR"
+# Set permissions
+echo "Setting permissions..."
+chmod +x cleanmac-* scripts/*.sh 2>/dev/null
 
-# Download CleanMac-Pro
-echo "📥 Downloading CleanMac Pro..."
-git clone --depth 1 https://github.com/Dan13681989/CleanMac-Pro.git
-cd CleanMac-Pro
+# Install main command
+echo "Installing cleanmac command..."
+sudo cp cleanmac-interactive /usr/local/bin/cleanmac 2>/dev/null
 
-# Make scripts executable
-echo "🔧 Making scripts executable..."
-chmod +x cleanmac*
-chmod +x bin/*.sh 2>/dev/null || true
+# Add alias to zshrc
+echo "Adding alias to ~/.zshrc..."
+if ! grep -q "alias cm=" ~/.zshrc; then
+    echo "alias cm='cleanmac'" >> ~/.zshrc
+fi
 
-# Install to /usr/local/bin
-echo "📦 Installing to /usr/local/bin..."
-for script in cleanmac cleanmac-dashboard cleanmac-analyze cleanmac-large-files cleanmac-smart-cache cleanmac-docker-clean cleanmac-security-scan; do
-    if [ -f "$script" ]; then
-        sudo cp "$script" /usr/local/bin/
-        sudo chmod +x /usr/local/bin/"$script"
-        echo "  ✅ Installed: $script"
-    fi
-done
+# Create config if doesn't exist
+if [ ! -f ~/.cleanmacrc ]; then
+    echo "Creating ~/.cleanmacrc..."
+    echo "# CleanMac Pro Configuration" > ~/.cleanmacrc
+    echo "BACKUP_DIR=\"\$HOME/Documents/CleanMac_Backups\"" >> ~/.cleanmacrc
+fi
 
-# Clean up
-cd ~
-rm -rf "$TEMP_DIR"
+# Create backup directory
+mkdir -p ~/Documents/CleanMac_Backups 2>/dev/null
 
 echo ""
-echo -e "${GREEN}🎉 Installation complete!${NC}"
-echo ""
-echo "📋 Available commands:"
-echo "  cleanmac              - Main menu with all options"
-echo "  cleanmac-dashboard    - System overview dashboard"
-echo "  cleanmac-analyze      - Disk usage analysis"
-echo "  cleanmac-large-files  - Find large files"
-echo "  cleanmac-smart-cache  - Clean system caches"
-echo "  cleanmac-docker-clean - Optimize Docker"
-echo "  cleanmac-security-scan - Security audit"
-echo ""
-echo "🚀 Get started with: cleanmac --help"
+echo "✅ Installation complete!"
+echo "Usage: 'cleanmac' or 'cm'"
+echo "Run: source ~/.zshrc to load aliases"
