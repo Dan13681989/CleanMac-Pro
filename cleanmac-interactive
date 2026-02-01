@@ -1,5 +1,9 @@
 #!/bin/bash
+<<<<<<< HEAD
 # cleanmac-interactive - Interactive Dashboard for CleanMac Pro v3.0.0 (Fixed)
+=======
+# cleanmac-interactive - Interactive Dashboard for CleanMac Pro
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
 # Part of CleanMac-Pro by Dan13681989
 
 # Handle command-line arguments
@@ -88,6 +92,7 @@ system_dashboard() {
     fi
 }
 
+<<<<<<< HEAD
 # Simple progress bar
 progress_bar() {
     local duration=${1:-2}
@@ -95,6 +100,50 @@ progress_bar() {
     for i in {1..20}; do
         echo -ne "▓"
         sleep 0.1
+=======
+# Rest of your existing functions...
+# (Copy from your original cleanmac-interactive starting from line 40)
+    
+    # Disk space
+    disk_info=$(df -h / | tail -1)
+    echo -e "💾 Disk: $(echo $disk_info | awk '{print $3 " / " $2 " used (" $5 ")"}')"
+    
+    # Memory
+    memory=$(vm_stat | grep "Pages free" | awk '{printf "%.1f", $3*4096/1073741824}')
+    echo -e "🧠 Memory: ${GREEN}${memory}GB${NC} free"
+    
+    # CPU
+    cpu_usage=$(top -l 1 -s 0 | grep "CPU usage" | awk '{print $3}' | tr -d '%')
+    echo -e "⚡ CPU: ${YELLOW}${cpu_usage}%${NC} user"
+    
+    # Network
+    if ping -c 1 -t 2 8.8.8.8 &>/dev/null; then
+        echo -e "🌐 Network: ${GREEN}Connected${NC}"
+    else
+        echo -e "🌐 Network: ${RED}Offline${NC}"
+    fi
+    
+    # Last cleanup
+    if [[ -f "$LAST_RUN_FILE" ]]; then
+        last_run=$(date -r "$LAST_RUN_FILE" "+%Y-%m-%d %H:%M")
+        echo -e "🧹 Last Clean: ${GREEN}${last_run}${NC}"
+    else
+        echo -e "🧹 Last Clean: ${RED}Never${NC}"
+    fi
+}
+
+# Progress bar
+progress_bar() {
+    local duration=$1
+    local width=40
+    local increment=0.1
+    local steps=$(echo "$duration / $increment" | bc)
+    
+    echo -ne "["
+    for ((i=0; i<width; i++)); do
+        echo -ne "▓"
+        sleep $increment
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     done
     echo -e "] Done!"
 }
@@ -116,11 +165,17 @@ main_menu() {
         echo "7) Advanced Tools"
         echo "8) System Monitor"
         echo "9) Settings"
+<<<<<<< HEAD
         echo "a) Schedule Management (Custom)"
         echo "b) Backup System (Custom)"
         echo "0) Exit"
         
         echo -ne "\n${BOLD}Select option [0-9,a,b]: ${NC}"
+=======
+        echo "0) Exit"
+        
+        echo -ne "\n${BOLD}Select option [0-9]: ${NC}"
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
         read -n 1 -r choice
         echo
         
@@ -134,14 +189,18 @@ main_menu() {
             7) advanced_tools_menu ;;
             8) system_monitor ;;
             9) settings_menu ;;
+<<<<<<< HEAD
             a) custom_schedule_menu ;;
             b) custom_backup_menu ;;
+=======
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
             0) echo -e "\n${GREEN}👋 Thank you for using CleanMac Pro!${NC}"; exit 0 ;;
             *) echo -e "${RED}Invalid selection!${NC}"; sleep 1 ;;
         esac
     done
 }
 
+<<<<<<< HEAD
 # Custom Schedule Menu (Your feature)
 custom_schedule_menu() {
     echo -e "\n${YELLOW}${BOLD}📅 CUSTOM SCHEDULE MANAGEMENT${NC}"
@@ -162,6 +221,8 @@ custom_backup_menu() {
     read -r
 }
 
+=======
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
 # Quick Clean Menu
 quick_clean_menu() {
     echo -e "\n${GREEN}${BOLD}🚀 QUICK CLEAN${NC}"
@@ -187,38 +248,99 @@ quick_clean_menu() {
 analyze_disk_menu() {
     echo -e "\n${YELLOW}${BOLD}🔍 DISK ANALYSIS${NC}"
     echo "------------------------------------------"
+<<<<<<< HEAD
     echo "Disk analysis would run here..."
+=======
+    
+    if [[ -f "./cleanmac-analyze" ]]; then
+        ./cleanmac-analyze
+    else
+        echo "Disk usage by directory:"
+        echo "-----------------------"
+        du -sh ~/Documents ~/Downloads ~/Library/Caches ~/.docker 2>/dev/null
+    fi
+    
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     echo -e "\n${DIM}Press Enter to continue...${NC}"
     read -r
 }
 
 # Large Files Menu
 large_files_menu() {
+<<<<<<< HEAD
     echo -e "\n${YELLOW}${BOLD}📁 LARGE FILES${NC}"
     echo "------------------------------------------"
     echo "Large file finder would run here..."
+=======
+    echo -e "\n${RED}${BOLD}🗑️  LARGE FILES${NC}"
+    echo "------------------------------------------"
+    
+    if [[ -f "./cleanmac-large-files" ]]; then
+        ./cleanmac-large-files
+    else
+        echo "Finding files larger than 100MB..."
+        echo "---------------------------------"
+        find ~ -type f -size +100M -exec ls -lh {} \; 2>/dev/null | head -10
+    fi
+    
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     echo -e "\n${DIM}Press Enter to continue...${NC}"
     read -r
 }
 
 # Docker Cleanup Menu
 docker_cleanup_menu() {
+<<<<<<< HEAD
     echo -e "\n${CYAN}${BOLD}🐳 DOCKER CLEANUP${NC}"
     echo "------------------------------------------"
     echo "Docker cleanup would run here..."
+=======
+    echo -e "\n${BLUE}${BOLD}🐳 DOCKER CLEANUP${NC}"
+    echo "------------------------------------------"
+    
+    if ! command -v docker &>/dev/null; then
+        echo -e "${RED}Docker not found.${NC}"
+    elif [[ -f "./cleanmac-docker-clean" ]]; then
+        ./cleanmac-docker-clean
+    else
+        echo "Docker disk usage:"
+        docker system df 2>/dev/null || echo "Docker not running"
+    fi
+    
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     echo -e "\n${DIM}Press Enter to continue...${NC}"
     read -r
 }
 
 # Security Scan Menu
 security_scan_menu() {
+<<<<<<< HEAD
     echo -e "\n${RED}${BOLD}🔒 SECURITY SCAN${NC}"
     echo "------------------------------------------"
     echo "Security scan would run here..."
+=======
+    echo -e "\n${MAGENTA}${BOLD}🛡️  SECURITY SCAN${NC}"
+    echo "------------------------------------------"
+    
+    if [[ -f "./cleanmac-security-scan" ]]; then
+        ./cleanmac-security-scan
+    else
+        echo "Basic security check:"
+        echo "-------------------"
+        # Check firewall
+        firewall_status=$(/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate 2>/dev/null | grep -i enabled)
+        [[ -n "$firewall_status" ]] && echo "✓ Firewall: Enabled" || echo "✗ Firewall: Disabled"
+        
+        # Check gatekeeper
+        spctl --status 2>/dev/null && echo "✓ Gatekeeper: Enabled"
+    fi
+    
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     echo -e "\n${DIM}Press Enter to continue...${NC}"
     read -r
 }
 
+<<<<<<< HEAD
 # Network Optimization Menu
 network_optimize_menu() {
     echo -e "\n${BLUE}${BOLD}🌐 NETWORK OPTIMIZATION${NC}"
@@ -239,6 +361,43 @@ network_optimize_menu() {
         0) return ;;
         *) echo -e "${RED}Invalid selection!${NC}" ;;
     esac
+=======
+# Network Optimize Menu
+network_optimize_menu() {
+    echo -e "\n${GREEN}${BOLD}🌐 NETWORK OPTIMIZATION${NC}"
+    echo "------------------------------------------"
+    
+    if [[ -f "./scripts/network_optimizer.sh" ]]; then
+        echo "1) Run Network Optimizer"
+        echo "2) Test Network Speed"
+        echo "3) Flush DNS Cache"
+        echo "0) Back"
+        
+        echo -ne "\nSelect: "
+        read -n 1 -r option
+        echo
+        
+        case $option in
+            1) sudo ./scripts/network_optimizer.sh ;;
+            2) 
+                if [[ -f "./scripts/network_monitor.sh" ]]; then
+                    ./scripts/network_monitor.sh
+                else
+                    echo "Running speed test..."
+                    curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
+                fi
+                ;;
+            3) 
+                sudo dscacheutil -flushcache
+                sudo killall -HUP mDNSResponder
+                echo -e "${GREEN}✓ DNS cache flushed${NC}"
+                ;;
+            0) return ;;
+        esac
+    else
+        echo -e "${RED}Network optimizer script not found!${NC}"
+    fi
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     
     echo -e "\n${DIM}Press Enter to continue...${NC}"
     read -r
@@ -246,7 +405,11 @@ network_optimize_menu() {
 
 # Advanced Tools Menu
 advanced_tools_menu() {
+<<<<<<< HEAD
     echo -e "\n${MAGENTA}${BOLD}🛠️ ADVANCED TOOLS${NC}"
+=======
+    echo -e "\n${CYAN}${BOLD}🔧 ADVANCED TOOLS${NC}"
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     echo "------------------------------------------"
     echo "1) Empty Trash"
     echo "2) Clear DNS Cache"
@@ -260,6 +423,7 @@ advanced_tools_menu() {
     echo
     
     case $option in
+<<<<<<< HEAD
         1) echo "Emptying trash..." ;;
         2) echo "Clearing DNS cache..." ;;
         3) echo "Resetting launchpad..." ;;
@@ -267,6 +431,30 @@ advanced_tools_menu() {
         5) echo "Cleaning npm cache..." ;;
         0) return ;;
         *) echo -e "${RED}Invalid selection!${NC}" ;;
+=======
+        1) 
+            rm -rf ~/.Trash/* 2>/dev/null
+            echo -e "${GREEN}✓ Trash emptied${NC}"
+            ;;
+        2)
+            sudo dscacheutil -flushcache
+            sudo killall -HUP mDNSResponder
+            echo -e "${GREEN}✓ DNS cache cleared${NC}"
+            ;;
+        3)
+            defaults write com.apple.dock ResetLaunchPad -bool true
+            killall Dock
+            echo -e "${GREEN}✓ Launchpad reset${NC}"
+            ;;
+        4)
+            rm -rf ~/Library/Developer/Xcode/DerivedData
+            echo -e "${GREEN}✓ Xcode cache cleaned${NC}"
+            ;;
+        5)
+            npm cache clean --force 2>/dev/null && echo -e "${GREEN}✓ npm cache cleaned${NC}" || echo -e "${RED}✗ npm not found${NC}"
+            ;;
+        0) return ;;
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     esac
     
     echo -e "\n${DIM}Press Enter to continue...${NC}"
@@ -275,11 +463,41 @@ advanced_tools_menu() {
 
 # System Monitor
 system_monitor() {
+<<<<<<< HEAD
     echo -e "\n${GREEN}${BOLD}📊 SYSTEM MONITOR${NC}"
     echo "------------------------------------------"
     echo "System monitoring would run here..."
     echo -e "\n${DIM}Press Enter to continue...${NC}"
     read -r
+=======
+    echo -e "\n${YELLOW}${BOLD}📊 REAL-TIME MONITOR${NC}"
+    echo "------------------------------------------"
+    echo "Press 'q' to quit"
+    echo
+    
+    while true; do
+        clear
+        show_header
+        
+        # CPU
+        echo -e "${CYAN}⚡ CPU USAGE${NC}"
+        top -l 1 -s 0 | grep "CPU usage" | awk '{print "User: "$3" | System: "$5" | Idle: "$7}'
+        
+        # Memory
+        echo -e "\n${MAGENTA}🧠 MEMORY${NC}"
+        vm_stat | grep "Pages free" | awk '{printf "Free: %.1f GB\n", $3*4096/1073741824}'
+        
+        # Disk
+        echo -e "\n${GREEN}💾 DISK${NC}"
+        df -h / | tail -1 | awk '{print "Used: "$3" / "$2" ("$5")"}'
+        
+        echo -e "\n${DIM}Updated: $(date '+%H:%M:%S') - Press 'q' to exit${NC}"
+        
+        # Check for quit key
+        read -t 2 -n 1 -r key
+        [[ "$key" == "q" ]] && break
+    done
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
 }
 
 # Settings Menu
@@ -309,6 +527,7 @@ settings_menu() {
             echo -ne "New backup directory: "
             read -r new_dir
             if [[ -n "$new_dir" ]]; then
+<<<<<<< HEAD
                 BACKUP_DIR="$new_dir"
                 echo "Backup directory updated to: $BACKUP_DIR"
             fi
@@ -320,11 +539,45 @@ settings_menu() {
             ;;
         0) return ;;
         *) echo -e "${RED}Invalid selection!${NC}" ;;
+=======
+                echo "BACKUP_DIR=\"$new_dir\"" > "$CONFIG_FILE"
+                echo -e "${GREEN}✓ Backup directory updated${NC}"
+            fi
+            ;;
+        3)
+            echo -e "${RED}Reset configuration? [y/N]: ${NC}"
+            read -n 1 -r confirm
+            echo
+            [[ "$confirm" =~ ^[Yy]$ ]] && rm -f "$CONFIG_FILE" && echo -e "${GREEN}✓ Configuration reset${NC}"
+            ;;
+        0) return ;;
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b
     esac
     
     echo -e "\n${DIM}Press Enter to continue...${NC}"
     read -r
 }
 
+<<<<<<< HEAD
 # Start the main menu
 main_menu
+=======
+# Main function
+main() {
+    # Check if we're in CleanMac-Pro directory
+    if [[ ! -f "./cleanmac-smart-cache" ]] && [[ ! -f "./scripts/system_cleanup.sh" ]]; then
+        echo -e "${RED}Error: Please run from CleanMac-Pro directory${NC}"
+        echo "Current directory: $(pwd)"
+        exit 1
+    fi
+    
+    # Make sure scripts are executable
+    chmod +x ./cleanmac-* ./scripts/*.sh 2>/dev/null
+    
+    # Start the interactive menu
+    main_menu
+}
+
+# Run main function
+main
+>>>>>>> 0a48cec7f12050837f50bb48b5a626be1d24b38b

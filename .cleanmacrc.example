@@ -1,0 +1,35 @@
+# =============================================================================
+# CleanMac-Pro User Configuration
+# =============================================================================
+# Copy this file to ~/.cleanmacrc and edit to customize cleaning behavior.
+# Paths are evaluated when the script runs. Use quotes for paths with spaces.
+
+# PATHS TO INCLUDE IN CLEANING
+# Add specific cache directories you want cleaned (one per line).
+INCLUDE_PATHS=(
+    # Browser Caches
+    "$HOME/Library/Caches/Google/Chrome"
+    "$HOME/Library/Caches/com.apple.Safari"
+    "$HOME/Library/Caches/Mozilla"
+    
+    # Development Caches
+    "$HOME/.npm/_logs"
+    "$HOME/.cache"
+    
+    # User Library Caches (handled separately in main script)
+    # "$HOME/Library/Caches"
+)
+
+# PATHS TO EXCLUDE FROM CLEANING
+# List any subdirectories you want to PROTECT from cleaning.
+EXCLUDE_PATHS=(
+    # Example: Keep VS Code's cache
+    # "$HOME/Library/Caches/Code"
+    
+    # Example: Keep a specific app's data
+    # "$HOME/Library/Caches/com.example.App"
+)
+
+# BACKUP SETTINGS
+# Uncomment and set to override the default /tmp/ backup location
+# CLEANMAC_BACKUP_DIR="$HOME/Documents/CleanMac_Backups"
