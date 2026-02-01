@@ -1,0 +1,29 @@
+#!/bin/bash
+# CleanMac Pro - Quick Cleanup
+# Fast cleanup routine
+
+echo "🧹 CleanMac Pro - Quick Cleanup"
+echo "==============================="
+echo ""
+
+echo "🚀 Starting quick cleanup..."
+echo ""
+
+# Quick cache cleaning
+echo "1. Cleaning user caches..."
+find ~/Library/Caches -mindepth 1 -maxdepth 1 -exec rm -rf {} \; 2>/dev/null || true
+
+# Browser caches
+echo "2. Cleaning browser caches..."
+rm -rf ~/Library/Caches/Google/Chrome/* 2>/dev/null || true
+rm -rf ~/Library/Caches/com.apple.Safari/* 2>/dev/null || true
+
+# Homebrew cleanup
+if command -v brew &> /dev/null; then
+    echo "3. Cleaning Homebrew..."
+    brew cleanup 2>/dev/null || true
+fi
+
+echo ""
+echo "✅ Quick cleanup completed!"
+echo "💡 Run 'cleanmac-smart-cache' for comprehensive cleaning"

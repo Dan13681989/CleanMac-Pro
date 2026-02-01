@@ -1,0 +1,23 @@
+@@ -28,7 +28,13 @@
+ # ============================================================================
+ # CONFIGURATION FILE SETTINGS
+ # ============================================================================
+-CONFIG_FILE="$HOME/.cleanmacrc"
++# Allow environment variable to override config file location
++if [ -n "$CLEANMAC_CONFIG" ]; then
++    CONFIG_FILE="$CLEANMAC_CONFIG"
++else
++    CONFIG_FILE="$HOME/.cleanmacrc"
++fi
++
+ if [ -f "$CONFIG_FILE" ]; then
+     echo -e "${CYAN}📁 Loading configuration from: $CONFIG_FILE${NC}"
+     while IFS= read -r line; do
+@@ -63,7 +71,6 @@
+ # Allow user to override backup location via environment variable
+ USER_BACKUP_DIR="${CLEANMAC_BACKUP_DIR:-}"
+ if [ -n "$USER_BACKUP_DIR" ]; then
+-    CLEANMAC_BACKUP_DIR="$USER_BACKUP_DIR"
+     echo -e "${CYAN}📁 Using backup directory from environment: $USER_BACKUP_DIR${NC}"
+ fi
+ 

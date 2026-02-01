@@ -1,0 +1,33 @@
+--- cleanmac-smart-cache.orig	2024-12-12 17:30:00
++++ cleanmac-smart-cache	2024-12-12 18:00:00
+@@ -28,7 +28,13 @@
+ # ============================================================================
+ # CONFIGURATION FILE SETTINGS
+ # ============================================================================
+-CONFIG_FILE="$HOME/.cleanmacrc"
++# Allow environment variable to override config file location
++if [ -n "$CLEANMAC_CONFIG" ]; then
++    CONFIG_FILE="$CLEANMAC_CONFIG"
++else
++    CONFIG_FILE="$HOME/.cleanmacrc"
++fi
++
+ if [ -f "$CONFIG_FILE" ]; then
+     echo -e "${CYAN}📁 Loading configuration from: $CONFIG_FILE${NC}"
+     while IFS= read -r line; do
+@@ -46,6 +52,8 @@
+             config_value=$(echo "$line" | cut -d'=' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^['\"]//" -e "s/['\"]$//")
+             [ -n "$config_value" ] && CLEANMAC_BACKUP_DIR="$config_value"
+         fi
++        
++        # Add more config parsing here as needed
+     done < "$CONFIG_FILE"
+ fi
+ 
+@@ -53,7 +61,6 @@
+ # Allow user to override backup location via environment variable
+ USER_BACKUP_DIR="${CLEANMAC_BACKUP_DIR:-}"
+ if [ -n "$USER_BACKUP_DIR" ]; then
+-    CLEANMAC_BACKUP_DIR="$USER_BACKUP_DIR"
+     echo -e "${CYAN}📁 Using backup directory from environment: $USER_BACKUP_DIR${NC}"
+ fi

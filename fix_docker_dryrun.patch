@@ -1,0 +1,59 @@
+--- cleanmac-docker-clean.orig	2024-12-12 18:20:00
++++ cleanmac-docker-clean	2024-12-12 18:21:00
+@@ -180,7 +180,11 @@
+     
+     echo -e "${CYAN}🧹 Cleaning Docker system...${NC}"
+     
+-    # Remove unused containers, networks, images, and build cache
++    # In dry run mode, just show what would be done
++    if [ "$dry_run" = true ]; then
++        echo -e "${YELLOW}[DRY RUN] Would run: docker system prune -a --volumes -f${NC}"
++        return
++    fi
+     docker system prune -a --volumes -f
+     
+     # Remove dangling images
+@@ -319,23 +323,25 @@
+     # Clean Docker system
+     clean_docker_system "$dry_run"
+     
+-    # Ask about resizing if not dry run
+-    if [ "$dry_run" = false ]; then
+-        echo -e "${CYAN}===========================================${NC}"
+-        read -p "Do you want to resize Docker.raw? (current size may be 233GB) [y/N]: " resize_choice
+-        
+-        if [[ "$resize_choice" =~ ^[Yy]$ ]]; then
+-            read -p "Enter new size in GB (default: 64): " custom_size
+-            new_size=${custom_size:-64}
+-            resize_docker_raw "$new_size" "$dry_run"
+-        fi
+-        
+-        # Offer compaction
+-        echo -e "${CYAN}===========================================${NC}"
+-        read -p "Do you want to compact Docker.raw to reclaim space? [y/N]: " compact_choice
+-        
+-        if [[ "$compact_choice" =~ ^[Yy]$ ]]; then
+-            compact_docker_raw "$dry_run"
++    # Interactive questions
++    if [ "$dry_run" = true ]; then
++        echo -e "${YELLOW}[DRY RUN] Would ask about resizing and compacting Docker.raw${NC}"
++    else
++        if [ "$dry_run" = false ]; then
++            echo -e "${CYAN}===========================================${NC}"
++            read -p "Do you want to resize Docker.raw? (current size may be 233GB) [y/N]: " resize_choice
++            
++            if [[ "$resize_choice" =~ ^[Yy]$ ]]; then
++                read -p "Enter new size in GB (default: 64): " custom_size
++                new_size=${custom_size:-64}
++                resize_docker_raw "$new_size" "$dry_run"
++            fi
++            
++            echo -e "${CYAN}===========================================${NC}"
++            read -p "Do you want to compact Docker.raw to reclaim space? [y/N]: " compact_choice
++            
++            if [[ "$compact_choice" =~ ^[Yy]$ ]]; then
++                compact_docker_raw "$dry_run"
++            fi
+         fi
+     fi
+     

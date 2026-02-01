@@ -1,0 +1,282 @@
+#!/bin/bash
+
+# ============================================================================
+# CleanMac Pro - Docker Space Optimization
+# ============================================================================
+# Handles Docker cleanup including the massive Docker.raw file issue on macOS
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+print_header() {
+    echo -e "${CYAN}"
+    echo "🐳 CleanMac Pro - Docker Space Optimization"
+    echo "==========================================="
+    echo -e "${NC}"
+}
+
+print_usage() {
+    echo "Usage: $0 [options]"
+    echo ""
+    echo "Options:"
+    echo "  -n, --dry-run     Preview actions without executing"
+    echo "  -f, --force       Force Docker restart if needed"
+    echo "  -s, --size SIZE   Set new Docker.raw size in GB (default: 64)"
+    echo "  -h, --help        Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0                 # Standard cleanup"
+    echo "  $0 -n              # Dry run"
+    echo "  $0 -s 32           # Resize Docker.raw to 32GB"
+    echo "  $0 -f              # Force restart Docker if stuck"
+}
+
+# Check if Docker is running
+check_docker_status() {
+    if ! docker info >/dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  Docker daemon is not running${NC}"
+        return 1
+    fi
+    return 0
+}
+
+# Get Docker disk usage
+get_docker_usage() {
+    echo -e "${CYAN}📊 Current Docker Disk Usage:${NC}"
+    docker system df --format 'table {{.Type}}\t{{.TotalCount}}\t{{.Active}}\t{{.Size}}\t{{.Reclaimable}}' 2>/dev/null || \
+    echo -e "${RED}Unable to get Docker disk usage${NC}"
+}
+
+# Clean Docker system
+clean_docker_system() {
+    local dry_run=$1
+    
+    if [ "$dry_run" = true ]; then
+        echo -e "${YELLOW}[DRY RUN] Would clean Docker system${NC}"
+        echo -e "${YELLOW}  Would run: docker system prune -a --volumes -f${NC}"
+        return
+    fi
+    
+    echo -e "${CYAN}🧹 Cleaning Docker system...${NC}"
+    
+    # Remove unused containers, networks, images, and build cache
+    docker system prune -a --volumes -f
+    
+    # Remove dangling images
+    docker images -q -f dangling=true | xargs -r docker rmi 2>/dev/null || true
+    
+    echo -e "${GREEN}✅ Docker system cleaned${NC}"
+}
+
+# Check Docker.raw file size
+check_docker_raw_size() {
+    local docker_raw_path="$HOME/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw"
+    
+    if [ ! -f "$docker_raw_path" ]; then
+        echo -e "${YELLOW}⚠️  Docker.raw file not found${NC}"
+        return 1
+    fi
+    
+    local size_bytes=$(stat -f%z "$docker_raw_path" 2>/dev/null || stat -c%s "$docker_raw_path" 2>/dev/null)
+    local size_gb=$((size_bytes / 1024 / 1024 / 1024))
+    
+    echo -e "${CYAN}📁 Docker.raw file size: ${size_gb}GB${NC}"
+    echo -e "   Location: $docker_raw_path"
+    
+    return 0
+}
+
+# Resize Docker.raw using Docker Desktop GUI method (simulated)
+resize_docker_raw() {
+    local new_size_gb=$1
+    local dry_run=$2
+    
+    echo -e "${CYAN}📏 Resizing Docker.raw to ${new_size_gb}GB...${NC}"
+    
+    if [ "$dry_run" = true ]; then
+        echo -e "${YELLOW}[DRY RUN] Would resize Docker.raw to ${new_size_gb}GB${NC}"
+        echo -e "${YELLOW}  Steps that would be performed:${NC}"
+        echo -e "${YELLOW}  1. Stop Docker Desktop${NC}"
+        echo -e "${YELLOW}  2. Open Docker Desktop Settings${NC}"
+        echo -e "${YELLOW}  3. Navigate to Resources > Advanced${NC}"
+        echo -e "${YELLOW}  4. Adjust Disk image size slider to ${new_size_gb}GB${NC}"
+        echo -e "${YELLOW}  5. Click Apply & Restart${NC}"
+        return
+    fi
+    
+    # Check if Docker is running
+    if docker info >/dev/null 2>&1; then
+        echo -e "${YELLOW}Stopping Docker Desktop...${NC}"
+        osascript -e 'quit app "Docker"'
+        sleep 5
+    fi
+    
+    echo -e "${YELLOW}📝 Manual steps required to resize Docker.raw:${NC}"
+    echo -e "1. Open Docker Desktop (click the whale icon in your dock)"
+    echo -e "2. Go to Settings (gear icon) > Resources > Advanced"
+    echo -e "3. Adjust the 'Disk image size' slider to ${new_size_gb}GB"
+    echo -e "4. Click 'Apply & Restart'"
+    echo -e ""
+    echo -e "${YELLOW}⚠️  Note: The resize operation can take several minutes${NC}"
+    
+    read -p "Press Enter when you've completed the resize..."
+}
+
+# Alternative: Compact Docker.raw using hdiutil
+compact_docker_raw() {
+    local dry_run=$1
+    
+    local docker_raw_path="$HOME/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw"
+    
+    if [ ! -f "$docker_raw_path" ]; then
+        echo -e "${RED}❌ Docker.raw file not found${NC}"
+        return 1
+    fi
+    
+    if [ "$dry_run" = true ]; then
+        echo -e "${YELLOW}[DRY RUN] Would compact Docker.raw using hdiutil${NC}"
+        return
+    fi
+    
+    echo -e "${CYAN}🔧 Compacting Docker.raw with hdiutil...${NC}"
+    
+    # Check if Docker is running
+    if docker info >/dev/null 2>&1; then
+        echo -e "${YELLOW}Stopping Docker Desktop...${NC}"
+        osascript -e 'quit app "Docker"'
+        sleep 10
+    fi
+    
+    # Try to compact using hdiutil
+    if command -v hdiutil >/dev/null 2>&1; then
+        echo -e "${CYAN}Running hdiutil compact...${NC}"
+        hdiutil compact "$docker_raw_path" -batteryallowed
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✅ Docker.raw compacted successfully${NC}"
+        else
+            echo -e "${YELLOW}⚠️  hdiutil compact failed, trying alternative method...${NC}"
+            compact_via_sparse_conversion "$docker_raw_path"
+        fi
+    else
+        echo -e "${RED}❌ hdiutil not found${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}✅ Docker.raw optimization completed${NC}"
+}
+
+# Alternative compact method
+compact_via_sparse_conversion() {
+    local docker_raw_path="$1"
+    local backup_path="${docker_raw_path}.backup.$(date +%Y%m%d_%H%M%S)"
+    
+    echo -e "${CYAN}Creating backup of Docker.raw...${NC}"
+    cp "$docker_raw_path" "$backup_path"
+    
+    echo -e "${CYAN}Converting to sparse bundle...${NC}"
+    hdiutil convert "$docker_raw_path" -format UDSB -o "${docker_raw_path}.sparse"
+    
+    if [ -f "${docker_raw_path}.sparse" ]; then
+        echo -e "${CYAN}Replacing original file...${NC}"
+        mv "${docker_raw_path}.sparse" "$docker_raw_path"
+        echo -e "${GREEN}✅ Conversion completed${NC}"
+        echo -e "${YELLOW}Backup saved to: $backup_path${NC}"
+    else
+        echo -e "${RED}❌ Conversion failed${NC}"
+    fi
+}
+
+# Main function
+main() {
+    local dry_run=false
+    local force_restart=false
+    local new_size=64
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -n|--dry-run)
+                dry_run=true
+                shift
+                ;;
+            -f|--force)
+                force_restart=true
+                shift
+                ;;
+            -s|--size)
+                new_size="$2"
+                shift 2
+                ;;
+            -h|--help)
+                print_header
+                print_usage
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                print_usage
+                exit 1
+                ;;
+        esac
+    done
+    
+    print_header
+    
+    # Check Docker status
+    if ! check_docker_status; then
+        if [ "$force_restart" = true ]; then
+            echo -e "${YELLOW}🔄 Force restarting Docker...${NC}"
+            open --background -a Docker
+            sleep 10
+        else
+            echo -e "${YELLOW}💡 Tip: Start Docker Desktop or use -f flag to force restart${NC}"
+        fi
+    fi
+    
+    # Get current usage
+    get_docker_usage
+    
+    # Check Docker.raw size
+    check_docker_raw_size
+    
+    # Clean Docker system
+    clean_docker_system "$dry_run"
+    
+    # Ask about resizing if not dry run
+    if [ "$dry_run" = false ]; then
+        echo -e "${CYAN}===========================================${NC}"
+        read -p "Do you want to resize Docker.raw? (current size may be 233GB) [y/N]: " resize_choice
+        
+        if [[ "$resize_choice" =~ ^[Yy]$ ]]; then
+            read -p "Enter new size in GB (default: 64): " custom_size
+            new_size=${custom_size:-64}
+            resize_docker_raw "$new_size" "$dry_run"
+        fi
+        
+        # Offer compaction
+        echo -e "${CYAN}===========================================${NC}"
+        read -p "Do you want to compact Docker.raw to reclaim space? [y/N]: " compact_choice
+        
+        if [[ "$compact_choice" =~ ^[Yy]$ ]]; then
+            compact_docker_raw "$dry_run"
+        fi
+    else
+        echo -e "${YELLOW}[DRY RUN] Would ask about resizing and compacting Docker.raw${NC}"
+    fi
+    
+    # Final summary
+    echo -e "${GREEN}===========================================${NC}"
+    echo -e "${GREEN}✅ Docker cleanup completed${NC}"
+    
+    if [ "$dry_run" = false ]; then
+        get_docker_usage
+        check_docker_raw_size
+    fi
+}
+
+# Run main function
+main "$@"

@@ -1,0 +1,44 @@
+--- cleanmac-smart-cache	2025-12-12 17:30:01
++++ cleanmac-smart-cache-new	2025-12-12 17:35:00
+@@ -24,6 +24,41 @@
+     esac
+ done
+ 
++# ============================================================================
++# LOAD USER CONFIGURATION (if it exists)
++# ============================================================================
++CONFIG_FILE="$HOME/.cleanmacrc"
++USER_INCLUDE_PATHS=()
++USER_EXCLUDE_PATHS=()
++
++if [ -f "$CONFIG_FILE" ]; then
++    echo "⚙️  Loading user configuration from: $CONFIG_FILE"
++    # Source the config file in a controlled way
++    while IFS= read -r line; do
++        # Skip comments and empty lines
++        [[ "$line" =~ ^[[:space:]]*# ]] && continue
++        [[ -z "$line" ]] && continue
++        
++        # Parse INCLUDE_PATHS array
++        if [[ "$line" =~ ^INCLUDE_PATHS=\( ]]; then
++            while IFS= read -r path_line; do
++                [[ "$path_line" == ")" ]] && break
++                [[ "$path_line" =~ ^[[:space:]]*# ]] && continue
++                # Remove quotes and trim
++                cleaned_path=$(echo "$path_line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^['\"]//" -e "s/['\"]$//")
++                [ -n "$cleaned_path" ] && USER_INCLUDE_PATHS+=("$cleaned_path")
++            done
++        fi
++        
++        # Check for CLEANMAC_BACKUP_DIR override
++        if [[ "$line" =~ ^CLEANMAC_BACKUP_DIR= ]]; then
++            config_value=$(echo "$line" | cut -d'=' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^['\"]//" -e "s/['\"]$//")
++            [ -n "$config_value" ] && CLEANMAC_BACKUP_DIR="$config_value"
++        fi
++    done < "$CONFIG_FILE"
++fi
++
++# ============================================================================
+ # Allow user to override backup location via environment variable
+ USER_BACKUP_DIR="${CLEANMAC_BACKUP_DIR:-}"
+ if [ -n "$USER_BACKUP_DIR" ]; then

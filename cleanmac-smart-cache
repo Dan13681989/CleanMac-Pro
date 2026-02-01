@@ -1,0 +1,257 @@
+#!/bin/bash
+
+# ============================================================================
+# CleanMac Pro - Smart Cache Cleaning
+# ============================================================================
+# Safe, smart cache cleaning with backup functionality
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Variables for space calculation
+TOTAL_SPACE_RECOVERED=0
+
+# ============================================================================
+# DEFAULT SETTINGS
+# ============================================================================
+
+# PATHS TO CLEAN (defaults - can be extended via config file)
+USER_INCLUDE_PATHS=(
+    "$HOME/.npm/_logs"
+    "$HOME/.cache"
+)
+
+# PATHS TO EXCLUDE FROM CLEANING
+EXCLUDE_PATHS=(
+    # Example: Keep VS Code's cache
+    # "$HOME/Library/Caches/Code"
+)
+
+# ============================================================================
+# CONFIGURATION FILE SETTINGS
+# ============================================================================
+
+# Allow environment variable to override config file location
+if [ -n "$CLEANMAC_CONFIG" ]; then
+    CONFIG_FILE="$CLEANMAC_CONFIG"
+else
+    CONFIG_FILE="$HOME/.cleanmacrc"
+fi
+
+# Initialize config variables
+CLEANMAC_BACKUP_DIR=""
+
+if [ -f "$CONFIG_FILE" ]; then
+    echo -e "${CYAN}📁 Loading configuration from: $CONFIG_FILE${NC}"
+    while IFS= read -r line; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" ]] && continue
+
+        # Check for CLEANMAC_BACKUP_DIR override
+        if [[ "$line" =~ ^CLEANMAC_BACKUP_DIR= ]]; then
+            config_value=$(echo "$line" | cut -d'=' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^['\"]//" -e "s/['\"]$//")
+            # Expand ~ and $HOME
+            config_value="${config_value//\~/$HOME}"
+            config_value="${config_value//\$HOME/$HOME}"
+            CLEANMAC_BACKUP_DIR="$config_value"
+        fi
+    done < "$CONFIG_FILE"
+fi
+
+# ============================================================================
+# BACKUP DIRECTORY SETUP
+# ============================================================================
+
+# Allow environment variable to override backup location
+if [ -n "$CLEANMAC_BACKUP_DIR" ]; then
+    BACKUP_DIR="$CLEANMAC_BACKUP_DIR"
+    echo -e "${CYAN}📁 Using backup directory from config: $BACKUP_DIR${NC}"
+elif [ -n "$USER_BACKUP_DIR" ]; then
+    BACKUP_DIR="$USER_BACKUP_DIR"
+    echo -e "${CYAN}📁 Using backup directory from environment: $BACKUP_DIR${NC}"
+else
+    BACKUP_DIR="/tmp"
+fi
+
+# ============================================================================
+# FUNCTIONS
+# ============================================================================
+
+print_usage() {
+    echo -e "${CYAN}🧹 CleanMac Pro - Smart Cache Cleaning${NC}"
+    echo -e "${CYAN}======================================${NC}"
+    echo "Usage: $0 [-n|--dry-run] [-h|--help]"
+    echo "  -n, --dry-run  Preview actions without deleting"
+    echo "  -h, --help     Show this help message"
+    exit 0
+}
+
+# Function to check if path should be excluded
+should_exclude() {
+    local path="$1"
+    for exclude in "${EXCLUDE_PATHS[@]}"; do
+        if [[ "$path" == "$exclude"* ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Function to safely clean a directory
+safe_clean_directory() {
+    local target_dir="$1"
+    local dry_run="$2"
+    
+    if [ ! -d "$target_dir" ]; then
+        return
+    fi
+    
+    # Calculate size before
+    local size_before=$(du -sk "$target_dir" 2>/dev/null | awk '{print $1}' || echo "0")
+    
+    if [ "$dry_run" = true ]; then
+        echo -e "   ${YELLOW}📁 Would clear: $target_dir${NC}"
+        echo -e "   ${YELLOW}   Size: $((size_before / 1024))MB${NC}"
+    else
+        echo -e "   📁 Cleaning: $target_dir"
+        # Remove contents but not the directory itself
+        find "$target_dir" -mindepth 1 -maxdepth 1 -exec rm -rf {} \; 2>/dev/null || true
+        
+        # Calculate size after
+        local size_after=$(du -sk "$target_dir" 2>/dev/null | awk '{print $1}' || echo "0")
+        local space_freed=$((size_before - size_after))
+        TOTAL_SPACE_RECOVERED=$((TOTAL_SPACE_RECOVERED + space_freed))
+    fi
+}
+
+# ============================================================================
+# MAIN SCRIPT
+# ============================================================================
+
+# Parse command line arguments
+DRY_RUN=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -n|--dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            print_usage
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            print_usage
+            exit 1
+            ;;
+    esac
+done
+
+# Create backup directory with timestamp
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+FULL_BACKUP_DIR="${BACKUP_DIR}/cleanmac_backup_${TIMESTAMP}"
+
+if [ "$DRY_RUN" = true ]; then
+    echo -e "${CYAN}🧹 CleanMac Pro - Smart Cache Cleaning${NC}"
+    echo -e "${CYAN}======================================${NC}"
+    echo -e "${YELLOW}📦 [DRY RUN] Would create safety backup in $FULL_BACKUP_DIR...${NC}"
+else
+    echo -e "${CYAN}🧹 CleanMac Pro - Smart Cache Cleaning${NC}"
+    echo -e "${CYAN}======================================${NC}"
+    echo -e "${CYAN}📦 Creating safety backup in $FULL_BACKUP_DIR...${NC}"
+    mkdir -p "$FULL_BACKUP_DIR"
+fi
+
+echo -e "${CYAN}🗑️  Cleaning system caches...${NC}"
+
+# Clean User Library Caches (special handling)
+if [ -d "$HOME/Library/Caches" ]; then
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${CYAN}🔧 [DRY RUN] Cleaning: User Library Caches${NC}"
+        echo -e "   ${YELLOW}📁 Would clear contents of: $HOME/Library/Caches/*${NC}"
+    else
+        echo -e "${CYAN}🔧 Cleaning: User Library Caches${NC}"
+        safe_clean_directory "$HOME/Library/Caches" false
+    fi
+fi
+
+# Clean specific caches from USER_INCLUDE_PATHS
+for cache_path in "${USER_INCLUDE_PATHS[@]}"; do
+    if should_exclude "$cache_path"; then
+        echo -e "   ${YELLOW}⚠️  Skipping excluded path: $cache_path${NC}"
+        continue
+    fi
+    
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${CYAN}🔧 [DRY RUN] Cleaning: $(basename "$cache_path")${NC}"
+        echo -e "   ${YELLOW}📁 Would backup and clear: $cache_path${NC}"
+    else
+        echo -e "${CYAN}🔧 Cleaning: $(basename "$cache_path")${NC}"
+        safe_clean_directory "$cache_path" false
+    fi
+done
+
+# Additional caches that should always be cleaned
+ALWAYS_CLEAN=(
+    "$HOME/Library/Caches/com.apple.Safari"
+    "$HOME/Library/Logs"
+    "$HOME/Library/Saved Application State"
+)
+
+for cache_path in "${ALWAYS_CLEAN[@]}"; do
+    if should_exclude "$cache_path"; then
+        echo -e "   ${YELLOW}⚠️  Skipping excluded path: $cache_path${NC}"
+        continue
+    fi
+    
+    if [ "$DRY_RUN" = true ]; then
+        if [ -d "$cache_path" ]; then
+            echo -e "${CYAN}🔧 [DRY RUN] Cleaning: $(basename "$cache_path")${NC}"
+            echo -e "   ${YELLOW}📁 Would backup and clear: $cache_path${NC}"
+        fi
+    else
+        safe_clean_directory "$cache_path" false
+    fi
+done
+
+# Clean Homebrew cache
+if command -v brew >/dev/null 2>&1; then
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${CYAN}🍺 Would clean Homebrew cache (dry-run)${NC}"
+    else
+        echo -e "${CYAN}🍺 Cleaning Homebrew cache...${NC}"
+        brew cleanup 2>/dev/null || true
+    fi
+fi
+
+# Final summary
+echo -e "${GREEN}==============================================${NC}"
+echo -e "${GREEN}✅ Smart cache cleaning completed!${NC}"
+
+if [ "$DRY_RUN" = true ]; then
+    echo -e "${YELLOW}📦 [DRY RUN] Would create backup in: $FULL_BACKUP_DIR${NC}"
+    echo -e "${YELLOW}💾 Space that would be recovered: (dry run - no actual cleaning)${NC}"
+else
+    if [[ "$BACKUP_DIR" == "/tmp"* ]]; then
+        echo -e "${GREEN}📦 Backup created in TEMPORARY location: $FULL_BACKUP_DIR (will be deleted on reboot)${NC}"
+    else
+        echo -e "${GREEN}📦 Backup created in user directory: $FULL_BACKUP_DIR${NC}"
+    fi
+    
+    # Convert kilobytes to human readable
+    if [ $TOTAL_SPACE_RECOVERED -ge 1048576 ]; then
+        space_gb=$((TOTAL_SPACE_RECOVERED / 1048576))
+        echo -e "${GREEN}💾 Space recovered: ${space_gb}GB${NC}"
+    elif [ $TOTAL_SPACE_RECOVERED -ge 1024 ]; then
+        space_mb=$((TOTAL_SPACE_RECOVERED / 1024))
+        echo -e "${GREEN}💾 Space recovered: ${space_mb}MB${NC}"
+    else
+        echo -e "${GREEN}💾 Space recovered: ${TOTAL_SPACE_RECOVERED}KB${NC}"
+    fi
+fi

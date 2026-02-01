@@ -1,0 +1,48 @@
+#!/bin/bash
+
+echo "🚀 CleanMac Pro Enterprise Dashboard"
+echo "==================================="
+echo ""
+echo "📊 SYSTEM OVERVIEW"
+echo "=================="
+echo "💻 Hostname: $(hostname)"
+echo "🖥️  macOS: $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
+echo "👤 User: $(whoami)"
+uptime_output=$(uptime)
+uptime_clean=$(echo "$uptime_output" | sed 's/.*up //' | sed 's/, [0-9]* user.*//')
+echo "⏰ Uptime: $uptime_clean"
+echo "🚀 CPU: $(sysctl -n machdep.cpu.brand_string)"
+echo "💾 Memory: $(sysctl -n hw.memsize | awk '{printf "%.1f", $1/1024/1024/1024}') GB RAM"
+echo "💿 Disk: $(df -h / | awk 'NR==2 {print $4 " free of " $2}')"
+echo ""
+echo "🔍 ENHANCED DISK ANALYSIS"
+echo "========================"
+echo "💾 Home directory usage:  $(du -sh "$HOME" 2>/dev/null | cut -f1)"
+echo "📁 Large files (>100MB): $(find "$HOME" -type f -size +100M 2>/dev/null | wc -l | tr -d ' ')"
+if command -v docker &> /dev/null; then
+    echo "🐳 Docker images: $(docker images -q 2>/dev/null | wc -l | tr -d ' ')"
+else
+    echo "🐳 Docker: Not installed"
+fi
+if command -v ncdu &> /dev/null; then
+    echo "🔬 Disk analyzer: Available (ncdu)"
+else
+    echo "🔬 Disk analyzer: Install with 'brew install ncdu'"
+fi
+echo ""
+echo "🚀 QUICK ACTIONS"
+echo "================"
+echo "   cleanmac-analyze       - Explore disk usage interactively"
+echo "   cleanmac-large-files   - Show largest files"
+echo "   cleanmac-docker-clean  - Clean Docker space"
+echo "   cleanmac-smart-cache   - Smart cache cleaning"
+echo "   cleanmac-enterprise    - Full control panel"
+echo "   cleanmac-security-scan - Security audit"
+echo "   cleanmac-clean-now     - Quick cleanup"
+echo ""
+echo "💡 TIPS"
+echo "======"
+echo "• Run 'cleanmac-analyze' first to understand disk usage"
+echo "• Use 'cleanmac-large-files' to find space hogs"
+echo "• Run 'cleanmac-smart-cache' monthly for maintenance"
+echo "• Use 'cleanmac-docker-clean' if Docker is slow"
