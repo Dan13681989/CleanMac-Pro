@@ -106,3 +106,29 @@ fi
 
 echo -e "\n${GREEN}✅ Network optimization complete!${NC}"
 echo "Note: Some network changes may take a few moments to apply."
+
+# 3. Network Speed Test
+echo -e "\n${YELLOW}3. Testing Network Speed...${NC}"
+echo "------------------------------------------"
+
+# Check if networkQuality command exists (macOS 12+)
+if command -v networkQuality &> /dev/null; then
+    echo "Running Apple's network quality test..."
+    echo "------------------------------------------"
+    networkQuality
+    echo "------------------------------------------"
+    echo -e "${GREEN}✓ Network speed test completed${NC}"
+elif command -v speedtest &> /dev/null; then
+    echo "Running speedtest-cli..."
+    echo "------------------------------------------"
+    speedtest --simple
+    echo "------------------------------------------"
+    echo -e "${GREEN}✓ Network speed test completed${NC}"
+else
+    echo -e "${RED}✗ No network testing tool found${NC}"
+    echo "Install speedtest-cli: brew install speedtest-cli"
+    echo "Or update to macOS 12+ for built-in networkQuality"
+fi
+
+echo -e "\n${GREEN}Network optimization completed!${NC}"
+echo "========================================"

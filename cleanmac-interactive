@@ -233,7 +233,7 @@ network_optimize_menu() {
     
     case $option in
         1) echo "Running network optimizer..." ;;
-        2) echo "Testing network speed..." ;;
+        2) ./scripts/network_optimizer.sh ;;
         3) echo "Flushing DNS cache..." ;;
         0) return ;;
         *) echo -e "${RED}Invalid selection!${NC}" ;;
