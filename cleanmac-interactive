@@ -222,8 +222,8 @@ echo -e "\n${RED}${BOLD}🔒 SECURITY SCAN${NC}"
 network_optimize_menu() {
     echo -e "\n${BLUE}${BOLD}🌐 NETWORK OPTIMIZATION${NC}"
     echo "------------------------------------------"
-    echo "1) Run Network Optimizer"
-    echo "2) Test Network Speed"
+    echo "1) [INFO] Use option 2 instead"
+    echo "2) Run Full Network Optimizer (with speed test)"
     echo "3) Flush DNS Cache"
     echo "0) Back"
     
@@ -232,7 +232,7 @@ network_optimize_menu() {
     echo
     
     case $option in
-        1) echo "Running network optimizer..." ;;
+        1) echo "This option is deprecated. Please use option 2." ;;
         2) ./scripts/network_optimizer.sh ;;
         3) echo "Flushing DNS cache..." ;;
         0) return ;;
