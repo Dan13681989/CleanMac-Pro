@@ -1,3 +1,9 @@
+# CleanMac Pro – Advanced macOS Cleaner
+
+![Swift](https://img.shields.io/badge/Swift-5.9-orange)
+![Platform](https://img.shields.io/badge/macOS-13+-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 # CleanMac Pro v3.0.0
 Professional macOS optimization suite with interactive dashboard.
 
