@@ -1,1 +1,34 @@
-src/cleanmac-interactive
+#!/bin/bash
+set -euo pipefail
+
+COMMAND="${1:-help}"
+shift || true
+
+case "$COMMAND" in
+    clean)
+        exec "$(dirname "$0")/src/cleanmac-clean-now" "$@"
+        ;;
+    dashboard|interactive|tui)
+        exec "$(dirname "$0")/src/cleanmac-interactive" "$@"
+        ;;
+    help|--help|-h)
+        cat << HELP
+CleanMac Pro – macOS optimization suite
+
+Usage:
+  cleanmac clean [--dry-run]   Run system cleaner (add --dry-run to preview)
+  cleanmac dashboard           Launch interactive TUI
+  cleanmac help                Show this help
+
+Examples:
+  cleanmac clean --dry-run     # See what would be deleted
+  cleanmac clean               # Actually clean
+  cleanmac dashboard           # Open full interface
+HELP
+        ;;
+    *)
+        echo "Unknown command: $COMMAND"
+        echo "Run 'cleanmac help' for usage"
+        exit 1
+        ;;
+esac
