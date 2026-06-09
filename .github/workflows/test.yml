@@ -1,0 +1,11 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  bats:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install bats-core
+      - run: bats tests
