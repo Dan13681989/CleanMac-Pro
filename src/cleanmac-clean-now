@@ -8,22 +8,21 @@ if [[ "${1:-}" == "--dry-run" ]]; then
     shift
 fi
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 echo -e "${GREEN}=== CleanMac Pro Cleaner ===${NC}"
 if [[ "$DRY_RUN" == true ]]; then
     echo -e "${YELLOW}DRY RUN MODE – no files will be deleted${NC}"
 fi
 
-# Helper function to clean a path safely
+# Helper function
 clean_item() {
     local path="$1"
     local description="${2:-$path}"
-    
     if [[ -e "$path" ]]; then
         if [[ "$DRY_RUN" == true ]]; then
             echo -e "[DRY RUN] Would delete: $description"
@@ -36,11 +35,17 @@ clean_item() {
 }
 
 # ============================================
-# Add your actual cleaning items here.
-# Example from typical CleanMac:
-# clean_item "$HOME/Library/Caches/com.apple.Safari" "Safari cache"
-# clean_item "$HOME/Library/Logs" "System logs"
-# clean_item "$HOME/.Trash/*" "Trash"
+# Real cleaning items (copied from original)
 # ============================================
+# The original script deleted these:
+clean_item "$HOME/Library/Caches" "User caches"
+clean_item "$HOME/Library/Logs" "User logs"
+clean_item "$HOME/.Trash" "Trash"
+clean_item "/Library/Caches" "System caches (requires sudo)" 2>/dev/null || true
+clean_item "$HOME/Library/Application Support/Code/Cache" "VS Code cache"
+clean_item "$HOME/Library/Containers/com.apple.Safari/Data/Library/Caches" "Safari caches"
+clean_item "$HOME/Library/Containers/com.apple.mail/Data/Library/Caches" "Mail caches"
+clean_item "$HOME/Library/Developer/Xcode/DerivedData" "Xcode derived data"
+clean_item "$HOME/Library/Developer/Xcode/Archives" "Xcode archives"
 
 echo -e "${GREEN}Cleanup finished.${NC}"
