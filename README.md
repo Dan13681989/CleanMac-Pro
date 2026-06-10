@@ -7,8 +7,6 @@
 
 **Professional macOS optimisation suite** – interactive TUI, security scanning, Docker cleanup, and smart cache management.
 
-![Demo placeholder](https://via.placeholder.com/800x400?text=CleanMac+Pro+Demo)  
-*(Add an asciinema recording or screenshot here)*
 
 ## ✨ Features
 
