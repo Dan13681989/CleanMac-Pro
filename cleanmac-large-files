@@ -1,0 +1,19 @@
+#!/bin/bash
+# CleanMac Pro - Large File Detection
+# Finds and reports large files consuming disk space
+
+set -e
+
+echo "📁 CleanMac Pro - Large File Detection"
+echo "======================================"
+
+echo "🔍 Scanning for large files (>100MB)..."
+echo ""
+
+# Find and display large files sorted by size
+find ~ -type f -size +100M -exec ls -lh {} \; 2>/dev/null | sort -k5 -hr | 
+head -30
+
+echo ""
+echo "💡 Tip: Use 'cleanmac-analyze' for interactive exploration"
+echo "💡 Tip: Use 'cleanmac-docker-clean' to optimize Docker space"

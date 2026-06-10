@@ -1,0 +1,30 @@
+#!/bin/bash
+# CleanMac Pro - Security Audit
+# Basic security checks
+
+echo "🛡️  CleanMac Pro - Security Audit"
+echo "================================"
+echo ""
+
+echo "🔍 Running basic security checks..."
+echo ""
+
+# Check for common security issues
+echo "1. Checking sudo access..."
+sudo -n true 2>/dev/null && echo "✅ Sudo access: Available" || echo "⚠️  Sudo access: Requires password"
+
+echo ""
+echo "2. Checking firewall..."
+if [[ $(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null) == "1" ]]; then
+    echo "✅ Firewall: Enabled"
+else
+    echo "⚠️  Firewall: Disabled or unknown"
+fi
+
+echo ""
+echo "3. Checking system updates..."
+softwareupdate -l 2>/dev/null | grep -q "No new software" && echo "✅ System updates: Up to date" || echo "⚠️  System updates: Available"
+
+echo ""
+echo "✅ Basic security audit completed"
+echo "💡 For comprehensive security, use professional security tools"

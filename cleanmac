@@ -1,98 +1,183 @@
 #!/bin/bash
 set -euo pipefail
 
-PREFIX="$(dirname "$0")"
+# ============================================
+# Configuration
+# ============================================
+VERSION="3.0.5"
+LOG_DIR="$HOME/.cleanmac"
+LOG_FILE="$LOG_DIR/cleanmac.log"
+mkdir -p "$LOG_DIR"
 
-COMMAND="${1:-help}"
-shift || true
+# Prefix will be replaced by Homebrew (or use relative path for dev)
+if [[ -n "${HOMEBREW_PREFIX:-}" ]]; then
+    PREFIX="$HOMEBREW_PREFIX/opt/cleanmac-pro"
+elif [[ -f "$(dirname "$0")/src/cleanmac-clean-now" ]]; then
+    PREFIX="$(dirname "$0")"
+else
+    PREFIX="@PREFIX@"  # replaced by Homebrew
+fi
 
-case "$COMMAND" in
-    clean)
-        exec "$PREFIX/src/cleanmac-clean-now" "$@"
-        ;;
-    dashboard|interactive|tui)
-        exec "$PREFIX/src/cleanmac-interactive" "$@"
-        ;;
-    uninstall)
-        exec "$PREFIX/uninstall.sh"
-        ;;
-    network)
-        SUB="${1:-help}"
-        shift || true
-        case "$SUB" in
-            status)
-                echo "=== Network Status ==="
-                PUBLIC_IP=$(curl -s ipinfo.io/ip)
-                echo "Public IP: $PUBLIC_IP"
-                LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
-                [ -z "$LOCAL_IP" ] && LOCAL_IP="Not connected"
-                echo "Local IP: $LOCAL_IP"
-                DNS=$(scutil --dns | grep 'nameserver\[[0-9]*\]' | awk '{print $3}' | sort -u | tr '\n' ' ')
-                echo "DNS Servers: $DNS"
-                ;;
-            flush-dns)
-                echo "Flushing DNS cache..."
+# ============================================
+# Helper functions
+# ============================================
+log() {
+    local level="$1"
+    shift
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $*" >> "$LOG_FILE"
+    if [[ "${QUIET:-0}" -eq 0 ]]; then
+        echo "$*"
+    fi
+}
+
+error() {
+    log "ERROR" "$*" >&2
+    exit 1
+}
+
+# ============================================
+# Command handlers
+# ============================================
+cmd_clean() {
+    exec "$PREFIX/src/cleanmac-clean-now" "$@"
+}
+
+cmd_dashboard() {
+    exec "$PREFIX/cleanmac-dashboard" "$@"
+}
+
+cmd_analyze() {
+    if [[ -x "$PREFIX/cleanmac-analyze" ]]; then
+        exec "$PREFIX/cleanmac-analyze" "$@"
+    else
+        error "Analyze script not found. Run 'cleanmac dashboard' for disk tools."
+    fi
+}
+
+cmd_large_files() {
+    if [[ -x "$PREFIX/cleanmac-large-files" ]]; then
+        exec "$PREFIX/cleanmac-large-files" "$@"
+    else
+        error "Large files script not found."
+    fi
+}
+
+cmd_docker() {
+    if [[ -x "$PREFIX/cleanmac-docker-clean" ]]; then
+        exec "$PREFIX/cleanmac-docker-clean" "$@"
+    else
+        error "Docker cleanup script not found."
+    fi
+}
+
+cmd_security() {
+    if [[ -x "$PREFIX/cleanmac-security-scan" ]]; then
+        exec "$PREFIX/cleanmac-security-scan" "$@"
+    else
+        error "Security scan script not found."
+    fi
+}
+
+cmd_uninstall() {
+    exec "$PREFIX/uninstall.sh"
+}
+
+cmd_network() {
+    local sub="${1:-help}"
+    shift || true
+    case "$sub" in
+        status)
+            echo "=== Network Status ==="
+            PUBLIC_IP=$(curl -s ipinfo.io/ip)
+            echo "Public IP: $PUBLIC_IP"
+            LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
+            [ -z "$LOCAL_IP" ] && LOCAL_IP="Not connected"
+            echo "Local IP: $LOCAL_IP"
+            DNS=$(scutil --dns | grep 'nameserver\[[0-9]*\]' | awk '{print $3}' | sort -u | tr '\n' ' ')
+            echo "DNS Servers: $DNS"
+            ;;
+        flush-dns)
+            echo "Flushing DNS cache..."
+            sudo dscacheutil -flushcache
+            sudo killall -HUP mDNSResponder
+            echo "DNS cache flushed."
+            ;;
+        optimize)
+            if [[ -x "$PREFIX/scripts/network_optimizer.sh" ]]; then
+                sudo "$PREFIX/scripts/network_optimizer.sh"
+            else
+                echo "Optimizer script not found. Applying safe defaults:"
                 sudo dscacheutil -flushcache
                 sudo killall -HUP mDNSResponder
-                echo "DNS cache flushed."
-                ;;
-            optimize)
-                if [[ -x "$PREFIX/scripts/network_optimizer.sh" ]]; then
-                    sudo "$PREFIX/scripts/network_optimizer.sh"
-                else
-                    echo "Optimizer script not found. Applying safe defaults:"
-                    sudo dscacheutil -flushcache
-                    sudo killall -HUP mDNSResponder
-                    sudo sysctl -w net.inet.tcp.win_scale_factor=8
-                    sudo sysctl -w net.inet.tcp.autorcvbufmax=33554432
-                    sudo sysctl -w net.inet.tcp.autosndbufmax=33554432
-                fi
-                ;;
-            monitor)
-                if [[ -x "$PREFIX/scripts/network_monitor.sh" ]]; then
-                    exec "$PREFIX/scripts/network_monitor.sh"
-                else
-                    echo "Network monitor not available."
-                fi
-                ;;
-            help|--help|-h)
-                cat << NETHELP
+                sudo sysctl -w net.inet.tcp.win_scale_factor=8
+                sudo sysctl -w net.inet.tcp.autorcvbufmax=33554432
+                sudo sysctl -w net.inet.tcp.autosndbufmax=33554432
+            fi
+            ;;
+        monitor)
+            if [[ -x "$PREFIX/scripts/network_monitor.sh" ]]; then
+                exec "$PREFIX/scripts/network_monitor.sh"
+            else
+                error "Network monitor not available."
+            fi
+            ;;
+        help|--help|-h)
+            cat << NETHELP
 Network Commands:
   cleanmac network status      Show current network status (IP, DNS)
   cleanmac network flush-dns   Flush DNS cache
   cleanmac network optimize    Apply DNS + TCP optimizations
   cleanmac network monitor     Launch network monitor (if available)
 NETHELP
-                ;;
-            *)
-                echo "Unknown network subcommand: $SUB"
-                echo "Run 'cleanmac network help'"
-                exit 1
-                ;;
-        esac
+            ;;
+        *)
+            error "Unknown network subcommand: $sub\nRun 'cleanmac network help'"
+            ;;
+    esac
+}
+
+# ============================================
+# Main CLI
+# ============================================
+COMMAND="${1:-help}"
+shift || true
+
+case "$COMMAND" in
+    clean)            cmd_clean "$@" ;;
+    dashboard)        cmd_dashboard "$@" ;;
+    analyze)          cmd_analyze "$@" ;;
+    large-files)      cmd_large_files "$@" ;;
+    docker)           cmd_docker "$@" ;;
+    security)         cmd_security "$@" ;;
+    uninstall)        cmd_uninstall "$@" ;;
+    network)          cmd_network "$@" ;;
+    version|--version|-v)
+        echo "CleanMac Pro v$VERSION"
         ;;
     help|--help|-h)
         cat << HELP
-CleanMac Pro – macOS optimization suite
+CleanMac Pro – macOS optimization suite v$VERSION
 
 Usage:
   cleanmac clean [--dry-run]   Run system cleaner (--dry-run to preview)
   cleanmac dashboard           Launch interactive TUI
+  cleanmac analyze             Analyze disk usage
+  cleanmac large-files         Find large files
+  cleanmac docker              Clean Docker containers/images
+  cleanmac security            Run security scan
   cleanmac network <command>   Network tools (status, flush-dns, optimize, monitor)
   cleanmac uninstall           Remove CleanMac Pro completely
+  cleanmac version             Show version
   cleanmac help                Show this help
 
 Examples:
   cleanmac clean --dry-run     # Preview deletions
   cleanmac clean               # Actually clean
-  cleanmac dashboard           # Open full interface
   cleanmac network status      # Check IP and DNS
   cleanmac network flush-dns   # Fix browsing issues
 HELP
         ;;
     *)
-        echo "Unknown command: $COMMAND"
-        echo "Run 'cleanmac help' for usage"
-        exit 1
+        error "Unknown command: $COMMAND\nRun 'cleanmac help' for usage"
         ;;
 esac
