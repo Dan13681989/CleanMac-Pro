@@ -14,7 +14,6 @@ mkdir -p "$LOG_DIR"
 QUIET=false
 JSON_OUT=false
 LOG_LEVEL="info"  # debug, info, error
-declare -A CONFIG
 
 # Load configuration if exists
 if [[ -f "$CONFIG_FILE" ]]; then
