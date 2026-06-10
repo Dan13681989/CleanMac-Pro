@@ -1,0 +1,27 @@
+name: Homebrew Test
+
+on:
+  push:
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-intel:
+    runs-on: macos-13
+    steps:
+      - name: Tap and install
+        run: |
+          brew tap Dan13681989/cleanmac
+          brew install cleanmac-pro
+          cleanmac version
+          cleanmac help
+  test-arm:
+    runs-on: macos-14
+    steps:
+      - name: Tap and install
+        run: |
+          brew tap Dan13681989/cleanmac
+          brew install cleanmac-pro
+          cleanmac version
+          cleanmac help
