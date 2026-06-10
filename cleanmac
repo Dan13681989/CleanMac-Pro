@@ -1,29 +1,93 @@
 #!/bin/bash
 set -euo pipefail
 
+PREFIX="$(dirname "$0")"
+
 COMMAND="${1:-help}"
 shift || true
 
 case "$COMMAND" in
     clean)
-        exec "$(dirname "$0")/src/cleanmac-clean-now" "$@"
+        exec "$PREFIX/src/cleanmac-clean-now" "$@"
         ;;
     dashboard|interactive|tui)
-        exec "$(dirname "$0")/src/cleanmac-interactive" "$@"
+        exec "$PREFIX/src/cleanmac-interactive" "$@"
+        ;;
+    uninstall)
+        exec "$PREFIX/uninstall.sh"
+        ;;
+    network)
+        SUB="${1:-help}"
+        shift || true
+        case "$SUB" in
+            status)
+                echo "=== Network Status ==="
+                PUBLIC_IP=$(curl -s ipinfo.io/ip)
+                echo "Public IP: $PUBLIC_IP"
+                LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
+                [ -z "$LOCAL_IP" ] && LOCAL_IP="Not connected"
+                echo "Local IP: $LOCAL_IP"
+                DNS=$(scutil --dns | grep 'nameserver\[[0-9]*\]' | awk '{print $3}' | sort -u | tr '\n' ' ')
+                echo "DNS Servers: $DNS"
+                ;;
+            flush-dns)
+                echo "Flushing DNS cache..."
+                sudo dscacheutil -flushcache
+                sudo killall -HUP mDNSResponder
+                echo "DNS cache flushed."
+                ;;
+            optimize)
+                if [[ -x "$PREFIX/scripts/network_optimizer.sh" ]]; then
+                    sudo "$PREFIX/scripts/network_optimizer.sh"
+                else
+                    echo "Optimizer script not found. Applying safe defaults:"
+                    sudo dscacheutil -flushcache
+                    sudo killall -HUP mDNSResponder
+                    sudo sysctl -w net.inet.tcp.win_scale_factor=8
+                    sudo sysctl -w net.inet.tcp.autorcvbufmax=33554432
+                    sudo sysctl -w net.inet.tcp.autosndbufmax=33554432
+                fi
+                ;;
+            monitor)
+                if [[ -x "$PREFIX/scripts/network_monitor.sh" ]]; then
+                    exec "$PREFIX/scripts/network_monitor.sh"
+                else
+                    echo "Network monitor not available."
+                fi
+                ;;
+            help|--help|-h)
+                cat << NETHELP
+Network Commands:
+  cleanmac network status      Show current network status (IP, DNS)
+  cleanmac network flush-dns   Flush DNS cache
+  cleanmac network optimize    Apply DNS + TCP optimizations
+  cleanmac network monitor     Launch network monitor (if available)
+NETHELP
+                ;;
+            *)
+                echo "Unknown network subcommand: $SUB"
+                echo "Run 'cleanmac network help'"
+                exit 1
+                ;;
+        esac
         ;;
     help|--help|-h)
         cat << HELP
 CleanMac Pro – macOS optimization suite
 
 Usage:
-  cleanmac clean [--dry-run]   Run system cleaner (add --dry-run to preview)
+  cleanmac clean [--dry-run]   Run system cleaner (--dry-run to preview)
   cleanmac dashboard           Launch interactive TUI
+  cleanmac network <command>   Network tools (status, flush-dns, optimize, monitor)
+  cleanmac uninstall           Remove CleanMac Pro completely
   cleanmac help                Show this help
 
 Examples:
-  cleanmac clean --dry-run     # See what would be deleted
+  cleanmac clean --dry-run     # Preview deletions
   cleanmac clean               # Actually clean
   cleanmac dashboard           # Open full interface
+  cleanmac network status      # Check IP and DNS
+  cleanmac network flush-dns   # Fix browsing issues
 HELP
         ;;
     *)
