@@ -17,15 +17,15 @@
 - **Security Audit** – check firewall, SIP, SSH settings, and system updates
 - **Network Toolkit** – status, flush‑DNS, TCP optimisation, reset to defaults, live monitor
 - **Enterprise Flags** – `--quiet`, `--json`, `--log-level`, log rotation, config file
-- **Shell Completions** – bash and zsh
-- **Homebrew Integration** – one‑command install
+- **Homebrew Integration** – one‑command install, shell completions for bash/zsh
 
-## 🍺 Installation (Recommended)
+## 🚀 Installation
 
+### Homebrew (recommended)
 ```bash
 brew tap Dan13681989/cleanmac
 brew install cleanmac-pro
-Manual from source
+Manual (from source)
 
 bash
 git clone https://github.com/Dan13681989/CleanMac-Pro.git
