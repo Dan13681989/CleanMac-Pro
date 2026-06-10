@@ -4,18 +4,30 @@ set -euo pipefail
 # ============================================
 # Configuration
 # ============================================
-VERSION="3.0.6"
+VERSION="3.0.8"
 LOG_DIR="$HOME/.cleanmac"
 LOG_FILE="$LOG_DIR/cleanmac.log"
+CONFIG_FILE="$LOG_DIR/config"
 mkdir -p "$LOG_DIR"
 
-# Prefix will be replaced by Homebrew (or use relative path for dev)
+# Defaults
+QUIET=false
+JSON_OUT=false
+LOG_LEVEL="info"  # debug, info, error
+declare -A CONFIG
+
+# Load configuration if exists
+if [[ -f "$CONFIG_FILE" ]]; then
+    source "$CONFIG_FILE"
+fi
+
+# Prefix handling
 if [[ -n "${HOMEBREW_PREFIX:-}" ]]; then
     PREFIX="$HOMEBREW_PREFIX/opt/cleanmac-pro"
-elif [[ -f "$(dirname "$0")/src/cleanmac-clean-now" ]]; then
+elif [[ -f "$(dirname "$0")/cleanmac-clean-now" ]]; then
     PREFIX="$(dirname "$0")"
 else
-    PREFIX="@PREFIX@"  # replaced by Homebrew
+    PREFIX="@PREFIX@"
 fi
 
 # ============================================
@@ -24,62 +36,118 @@ fi
 log() {
     local level="$1"
     shift
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $*" >> "$LOG_FILE"
-    if [[ "${QUIET:-0}" -eq 0 ]]; then
-        echo "$*"
+    [[ "$LOG_LEVEL" == "debug" && "$level" != "ERROR" && "$level" != "WARN" ]] && return 0
+    [[ "$level" == "ERROR" ]] && local prefix="[ERROR]"
+    [[ "$level" == "WARN" ]] && local prefix="[WARN]"
+    [[ "$level" == "INFO" ]] && local prefix="[INFO]"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $prefix $*" >> "$LOG_FILE"
+    if [[ "$QUIET" == false && "$JSON_OUT" == false ]]; then
+        >&2 echo "$*"
     fi
 }
 
 error() {
-    log "ERROR" "$*" >&2
+    log "ERROR" "$*"
+    if [[ "$JSON_OUT" == true ]]; then
+        echo "{\"error\": \"$*\"}"
+    else
+        echo "ERROR: $*" >&2
+    fi
     exit 1
 }
 
-# ============================================
-# Command handlers
-# ============================================
-cmd_clean() {
-    exec "$PREFIX/src/cleanmac-clean-now" "$@"
+warn() {
+    log "WARN" "$*"
+    if [[ "$JSON_OUT" == false && "$QUIET" == false ]]; then
+        echo "Warning: $*" >&2
+    fi
 }
 
-cmd_dashboard() {
-    exec "$PREFIX/cleanmac-dashboard" "$@"
+info() {
+    log "INFO" "$*"
+    if [[ "$JSON_OUT" == false && "$QUIET" == false ]]; then
+        echo "$*"
+    fi
+}
+
+json_output() {
+    if [[ "$JSON_OUT" == true ]]; then
+        echo "$1"
+    fi
+}
+
+rotate_logs() {
+    if [[ -f "$LOG_FILE" && $(stat -f%z "$LOG_FILE") -gt 5242880 ]]; then
+        mv "$LOG_FILE" "$LOG_FILE.old"
+        info "Log rotated (old size >5MB)"
+    fi
+}
+
+check_dependency() {
+    local cmd="$1"
+    local pkg="${2:-$1}"
+    local msg="$3"
+    if ! command -v "$cmd" &> /dev/null; then
+        warn "$msg. Install with: brew install $pkg"
+        return 1
+    fi
+    return 0
+}
+
+# ============================================
+# Parse global options
+# ============================================
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --quiet) QUIET=true; shift ;;
+        --json) JSON_OUT=true; shift ;;
+        --log-level) LOG_LEVEL="$2"; shift 2 ;;
+        --help|-h) COMMAND="help"; shift ;;
+        --version|-v) COMMAND="version"; shift ;;
+        *) break ;;
+    esac
+done
+
+# ============================================
+# Command handlers with enhancements
+# ============================================
+cmd_clean() {
+    if [[ "$JSON_OUT" == true ]]; then
+        # Dry-run only for JSON output
+        local output
+        output=$(sudo "$PREFIX/cleanmac-clean-now" --dry-run 2>&1)
+        # Convert to JSON (simplified)
+        echo "{\"dry_run\": true, \"actions\": $(echo "$output" | sed 's/"/\\"/g' | awk '{print "\""$0"\\n"}' | tr -d '\n' | sed 's/\\n$//')}"
+    else
+        exec sudo "$PREFIX/cleanmac-clean-now" "$@"
+    fi
 }
 
 cmd_analyze() {
-    if [[ -x "$PREFIX/cleanmac-analyze" ]]; then
-        exec "$PREFIX/cleanmac-analyze" "$@"
-    else
-        error "Analyze script not found. Run 'cleanmac dashboard' for disk tools."
-    fi
+    check_dependency "ncdu" "ncdu" "ncdu is required for disk analysis" || exit 1
+    exec "$PREFIX/cleanmac-analyze" "$@"
 }
 
 cmd_large_files() {
-    if [[ -x "$PREFIX/cleanmac-large-files" ]]; then
-        exec "$PREFIX/cleanmac-large-files" "$@"
-    else
-        error "Large files script not found."
-    fi
+    exec "$PREFIX/cleanmac-large-files" "$@"
 }
 
 cmd_docker() {
-    if [[ -x "$PREFIX/cleanmac-docker-clean" ]]; then
-        exec "$PREFIX/cleanmac-docker-clean" "$@"
-    else
-        error "Docker cleanup script not found."
-    fi
+    # Sanitize size argument
+    local size
+    for arg in "$@"; do
+        if [[ "$arg" =~ ^-s[[:space:]]*([0-9]+)$ ]]; then
+            size="${BASH_REMATCH[1]}"
+            if ! [[ "$size" =~ ^[0-9]+$ ]]; then
+                error "--size must be a positive integer (GB)"
+            fi
+        fi
+    done
+    exec "$PREFIX/cleanmac-docker-clean" "$@"
 }
 
 cmd_security() {
-    if [[ -x "$PREFIX/cleanmac-security-scan" ]]; then
-        exec "$PREFIX/cleanmac-security-scan" "$@"
-    else
-        error "Security scan script not found."
-    fi
-}
-
-cmd_uninstall() {
-    exec "$PREFIX/uninstall.sh"
+    exec "$PREFIX/cleanmac-security-scan" "$@"
 }
 
 cmd_network() {
@@ -87,14 +155,22 @@ cmd_network() {
     shift || true
     case "$sub" in
         status)
-            echo "=== Network Status ==="
-            PUBLIC_IP=$(curl -s ipinfo.io/ip)
-            echo "Public IP: $PUBLIC_IP"
-            LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
-            [ -z "$LOCAL_IP" ] && LOCAL_IP="Not connected"
-            echo "Local IP: $LOCAL_IP"
-            DNS=$(scutil --dns | grep 'nameserver\[[0-9]*\]' | awk '{print $3}' | sort -u | tr '\n' ' ')
-            echo "DNS Servers: $DNS"
+            if [[ "$JSON_OUT" == true ]]; then
+                PUBLIC_IP=$(curl -s ipinfo.io/ip)
+                LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
+                [ -z "$LOCAL_IP" ] && LOCAL_IP="Not connected"
+                DNS=$(scutil --dns | grep 'nameserver\[[0-9]*\]' | awk '{print $3}' | sort -u | tr '\n' ' ')
+                echo "{\"public_ip\": \"$PUBLIC_IP\", \"local_ip\": \"$LOCAL_IP\", \"dns_servers\": [$(echo "$DNS" | sed 's/ /", "/g' | sed 's/^/"/;s/ $//')]}"
+            else
+                echo "=== Network Status ==="
+                PUBLIC_IP=$(curl -s ipinfo.io/ip)
+                echo "Public IP: $PUBLIC_IP"
+                LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
+                [ -z "$LOCAL_IP" ] && LOCAL_IP="Not connected"
+                echo "Local IP: $LOCAL_IP"
+                DNS=$(scutil --dns | grep 'nameserver\[[0-9]*\]' | awk '{print $3}' | sort -u | tr '\n' ' ')
+                echo "DNS Servers: $DNS"
+            fi
             ;;
         flush-dns)
             echo "Flushing DNS cache..."
@@ -114,11 +190,18 @@ cmd_network() {
                 sudo sysctl -w net.inet.tcp.autosndbufmax=33554432
             fi
             ;;
+        reset)
+            echo "Resetting TCP settings to macOS defaults..."
+            sudo sysctl -w net.inet.tcp.win_scale_factor=3
+            sudo sysctl -w net.inet.tcp.autorcvbufmax=4194304
+            sudo sysctl -w net.inet.tcp.autosndbufmax=4194304
+            echo "TCP settings reset. DNS cache unchanged."
+            ;;
         monitor)
             if [[ -x "$PREFIX/scripts/network_monitor.sh" ]]; then
                 exec "$PREFIX/scripts/network_monitor.sh"
             else
-                error "Network monitor not available."
+                error "Network monitor not available. Reinstall with: brew reinstall cleanmac-pro"
             fi
             ;;
         help|--help|-h)
@@ -127,6 +210,7 @@ Network Commands:
   cleanmac network status      Show current network status (IP, DNS)
   cleanmac network flush-dns   Flush DNS cache
   cleanmac network optimize    Apply DNS + TCP optimizations
+  cleanmac network reset       Reset TCP to macOS defaults
   cleanmac network monitor     Launch network monitor (if available)
 NETHELP
             ;;
@@ -136,20 +220,50 @@ NETHELP
     esac
 }
 
+cmd_upgrade() {
+    if [[ -d "$(dirname "$0")/.git" ]]; then
+        echo "Upgrading from git repository..."
+        git -C "$(dirname "$0")" pull --rebase
+        make -C "$(dirname "$0")" install 2>/dev/null || {
+            echo "Manual reinstall required: cd $(dirname "$0") && ./install.sh"
+        }
+    else
+        warn "Homebrew installation detected. Run: brew upgrade cleanmac-pro"
+    fi
+}
+
+cmd_uninstall() {
+    echo "Removing CleanMac Pro..."
+    read -p "Also remove logs and config in $LOG_DIR? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        rm -rf "$LOG_DIR"
+    fi
+    read -p "Untap Homebrew tap? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        brew untap dan13681989/cleanmac 2>/dev/null || true
+    fi
+    exec "$PREFIX/uninstall.sh"
+}
+
 # ============================================
 # Main CLI
 # ============================================
 COMMAND="${1:-help}"
 shift || true
 
+rotate_logs
+
 case "$COMMAND" in
     clean)            cmd_clean "$@" ;;
-    dashboard)        cmd_dashboard "$@" ;;
+    dashboard)        exec "$PREFIX/cleanmac-dashboard" "$@" ;;
     analyze)          cmd_analyze "$@" ;;
     large-files)      cmd_large_files "$@" ;;
     docker)           cmd_docker "$@" ;;
     security)         cmd_security "$@" ;;
-    uninstall)        cmd_uninstall "$@" ;;
+    uninstall)        cmd_uninstall ;;
+    upgrade)          cmd_upgrade ;;
     network)          cmd_network "$@" ;;
     version|--version|-v)
         echo "CleanMac Pro v$VERSION"
@@ -158,23 +272,31 @@ case "$COMMAND" in
         cat << HELP
 CleanMac Pro – macOS optimization suite v$VERSION
 
-Usage:
-  cleanmac clean [--dry-run]   Run system cleaner (--dry-run to preview)
-  cleanmac dashboard           Launch interactive TUI
-  cleanmac analyze             Analyze disk usage
-  cleanmac large-files         Find large files
-  cleanmac docker              Clean Docker containers/images
-  cleanmac security            Run security scan
-  cleanmac network <command>   Network tools (status, flush-dns, optimize, monitor)
-  cleanmac uninstall           Remove CleanMac Pro completely
-  cleanmac version             Show version
-  cleanmac help                Show this help
+Global options:
+  --quiet           Suppress non‑essential output
+  --json            Output machine‑readable JSON (dry‑run only)
+  --log-level LEVEL debug|info|error
+  --help, -h        Show this help
+  --version, -v     Show version
+
+Commands:
+  clean [--dry-run]         Run system cleaner (--dry-run to preview)
+  dashboard                 Launch interactive TUI
+  analyze                   Analyze disk usage (requires ncdu)
+  large-files               Find large files (>100MB)
+  docker                    Clean Docker containers/images
+  security                  Run security scan
+  network <subcommand>      Network tools (status, flush-dns, optimize, reset, monitor)
+  upgrade                   Self‑upgrade (git clone only)
+  uninstall                 Remove CleanMac Pro completely
+  version                   Show version
+  help                      Show this help
 
 Examples:
-  cleanmac clean --dry-run     # Preview deletions
-  cleanmac clean               # Actually clean
-  cleanmac network status      # Check IP and DNS
-  cleanmac network flush-dns   # Fix browsing issues
+  cleanmac clean --dry-run --json     # JSON preview
+  cleanmac clean --quiet              # Silent cleaning
+  cleanmac network reset              # Revert TCP tuning
+  cleanmac analyze                    # Interactive disk usage
 HELP
         ;;
     *)
