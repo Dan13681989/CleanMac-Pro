@@ -1,0 +1,73 @@
+#!/bin/bash
+set -euo pipefail
+
+# Dry-run flag
+DRY_RUN=false
+if [[ "${1:-}" == "--dry-run" ]]; then
+    DRY_RUN=true
+    shift
+fi
+
+# Colours for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${GREEN}🧹 CleanMac Pro - Quick Cleanup${NC}"
+echo "==============================="
+echo ""
+
+if [[ "$DRY_RUN" == true ]]; then
+    echo -e "${YELLOW}🔍 DRY RUN MODE – nothing will be deleted${NC}"
+    echo ""
+fi
+
+echo "🚀 Starting quick cleanup..."
+echo ""
+
+# Helper function for dry-run or real deletion
+delete_path() {
+    local path="$1"
+    local description="$2"
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[DRY RUN] Would delete: $description"
+    else
+        rm -rf "$path" 2>/dev/null || true
+        echo "✓ Deleted: $description"
+    fi
+}
+
+# 1. Quick cache cleaning (original behaviour)
+echo "1. Cleaning user caches..."
+if [[ "$DRY_RUN" == true ]]; then
+    echo "[DRY RUN] Would delete all contents of ~/Library/Caches (except top level)"
+else
+    find ~/Library/Caches -mindepth 1 -maxdepth 1 -exec rm -rf {} \; 2>/dev/null || true
+    echo "✓ User caches cleaned"
+fi
+
+# 2. Browser caches (original specific paths)
+echo "2. Cleaning browser caches..."
+delete_path ~/Library/Caches/Google/Chrome "Google Chrome cache"
+delete_path ~/Library/Caches/com.apple.Safari "Safari cache"
+
+# 3. Homebrew cleanup (only if brew is installed)
+if command -v brew &> /dev/null; then
+    echo "3. Cleaning Homebrew..."
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[DRY RUN] Would run: brew cleanup"
+    else
+        brew cleanup 2>/dev/null || true
+        echo "✓ Homebrew cleaned"
+    fi
+else
+    echo "3. Homebrew not installed – skipping"
+fi
+
+echo ""
+echo -e "${GREEN}✅ Quick cleanup completed!${NC}"
+if [[ "$DRY_RUN" == true ]]; then
+    echo -e "${YELLOW}💡 Run without --dry-run to actually clean${NC}"
+else
+    echo "💡 Run 'cleanmac clean --dry-run' to preview next time"
+fi
