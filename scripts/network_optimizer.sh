@@ -1,134 +1,76 @@
 #!/bin/bash
-# CleanMac Pro Network Optimizer - Enhanced Version
+set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-echo -e "${BLUE}🌐 CleanMac Pro Network Optimizer${NC}"
+echo "🌐 CleanMac Pro Network Optimizer"
 echo "========================================"
+echo ""
 
 # 1. Flush DNS Cache
-echo -e "\n${YELLOW}1. Flushing DNS Cache...${NC}"
-sudo dscacheutil -flushcache 2>/dev/null
-sudo killall -HUP mDNSResponder 2>/dev/null
-echo -e "${GREEN}✓ DNS cache flushed${NC}"
+echo "1. Flushing DNS Cache..."
+sudo dscacheutil -flushcache
+sudo killall -HUP mDNSResponder
+echo "✓ DNS cache flushed"
+echo ""
 
-# 2. Improved: Restart only active network services
-echo -e "\n${YELLOW}2. Restarting Active Network Services...${NC}"
-count=0
-
-# Get list of network services, filter out asterisks and empty lines
-services=$(networksetup -listallnetworkservices 2>/dev/null | \
-           tail -n +2 | \
-           grep -v "^\*" | \
-           grep -v "^$" | \
-           sed 's/^ *//;s/ *$//')
-
-for service in $services; do
-    # Skip known problematic services
-    case "$service" in
-        "Thunderbolt"|"Bridge"|"iPhone"|"USB"|"Bluetooth"|"FireWire")
-            continue
-            ;;
-    esac
-    
-    # Check if service is active by trying to get its info
-    if networksetup -getinfo "$service" >/dev/null 2>&1; then
-        echo "  Restarting: $service"
-        # Try to disable IPv6 temporarily (silently)
-        sudo networksetup -setv6off "$service" >/dev/null 2>&1
-        ((count++))
-    fi
-done
-
-if [[ $count -gt 0 ]]; then
-    echo -e "${GREEN}✓ ${count} network services restarted${NC}"
+# 2. Restart Active Network Services
+echo "2. Restarting Active Network Services..."
+# Find active network service (Wi-Fi or Ethernet)
+SERVICE=$(networksetup -listnetworkserviceorder | grep -E "Wi-Fi|Ethernet" | head -1 | sed -E 's/.*: (.*) \(.*/\1/')
+if [[ -n "$SERVICE" ]]; then
+    sudo networksetup -setnetworkserviceenabled "$SERVICE" off
+    sleep 1
+    sudo networksetup -setnetworkserviceenabled "$SERVICE" on
+    echo "✓ Restarted: $SERVICE"
 else
-    echo -e "${YELLOW}⚠ No active network services found to restart${NC}"
+    echo "⚠ No active network service found"
 fi
+echo ""
 
 # 3. Optimize TCP/IP Parameters
-echo -e "\n${YELLOW}3. Optimizing TCP/IP Parameters...${NC}"
-{
-    sudo sysctl -w net.inet.tcp.delayed_ack=0
-    sudo sysctl -w net.inet.tcp.recvspace=65536
-    sudo sysctl -w net.inet.tcp.sendspace=65536
-    sudo sysctl -w kern.ipc.maxsockbuf=16777216
-    echo -e "${GREEN}✓ TCP parameters optimized${NC}"
-} 2>/dev/null
+echo "3. Optimizing TCP/IP Parameters..."
+sudo sysctl -w net.inet.tcp.delayed_ack=0
+sudo sysctl -w net.inet.tcp.recvspace=65536
+sudo sysctl -w net.inet.tcp.sendspace=65536
+# Set max socket buffer (if not already higher)
+CURRENT_MAX=$(sysctl -n kern.ipc.maxsockbuf 2>/dev/null || echo "0")
+if [[ "$CURRENT_MAX" -lt 8388608 ]]; then
+    sudo sysctl -w kern.ipc.maxsockbuf=8388608
+fi
+echo "✓ TCP parameters optimized"
+echo ""
 
-# 4. Improved Speed Test with fallbacks
-echo -e "\n${YELLOW}4. Testing Network Connection...${NC}"
-
-# First, check basic connectivity
-if ping -c 2 -t 2 8.8.8.8 >/dev/null 2>&1; then
-    echo -e "  Basic connectivity: ${GREEN}OK ✓${NC}"
-    
-    # Try speedtest-cli (Ookla)
-    if command -v speedtest >/dev/null 2>&1; then
-        echo "  Running speed test (Ookla)..."
-        # Try with timeout in case server is down
-        timeout 15 speedtest --simple 2>/dev/null || \
-        echo "    Speedtest server unavailable (temporary issue)"
-    else
-        echo "  Install speedtest-cli for detailed metrics:"
-        echo "    ${YELLOW}brew install speedtest-cli${NC}"
-    fi
+# 4. Test Network Connection
+echo "4. Testing Network Connection..."
+if ping -c 3 8.8.8.8 &>/dev/null; then
+    echo "  Basic connectivity: OK ✓"
 else
-    echo -e "  Basic connectivity: ${RED}FAILED ✗${NC}"
+    echo "  Basic connectivity: FAILED ✗"
 fi
+echo ""
 
-# 5. Improved Network Information
-echo -e "\n${YELLOW}5. Network Information:${NC}"
-
-# Get primary active IP (more reliable method)
-active_ip=$(ipconfig getifaddr $(route get default | grep interface | awk '{print $2}') 2>/dev/null)
-if [[ -n "$active_ip" ]]; then
-    echo -e "  📡 Active IP: ${GREEN}$active_ip${NC}"
+# 5. Speed Test (optional)
+echo "5. Running Speed Test..."
+if command -v speedtest-cli &>/dev/null; then
+    echo "  Using Ookla speedtest-cli..."
+    speedtest-cli --simple 2>/dev/null || echo "  Speed test failed (temporary issue)"
+elif command -v networkQuality &>/dev/null; then
+    echo "  Using Apple networkQuality (macOS 13+)..."
+    networkQuality -v 2>/dev/null | grep -E "(downlink|uplink)" | head -2 || echo "  Speed test failed"
 else
-    # Fallback to checking all interfaces
-    active_ip=$(ifconfig | grep "inet " | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
-    [[ -n "$active_ip" ]] && echo -e "  📡 IP Address: ${GREEN}$active_ip${NC}" || echo "  📡 IP Address: Not detected"
+    echo "  Speed test not available. Install with: brew install speedtest-cli"
+    echo "  Or use Apple's networkQuality (built-in on macOS 13+)."
 fi
+echo ""
 
-# Get gateway
-gateway=$(netstat -nr | grep default | head -1 | awk '{print $2}')
-echo -e "  🔄 Gateway: ${YELLOW}$gateway${NC}"
+# 5. Network Information
+echo "6. Network Information:"
+ACTIVE_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
+GATEWAY=$(route -n get default 2>/dev/null | grep gateway | awk '{print $2}')
+DNS=$(scutil --dns | grep 'nameserver\[[0-9]*\]' | awk '{print $3}' | sort -u | tr '\n' ', ')
+echo "  📡 Active IP: ${ACTIVE_IP:-Not connected}"
+echo "  🔄 Gateway: ${GATEWAY:-Unknown}"
+echo "  🔗 DNS Servers: ${DNS%%, }"
+echo ""
 
-# Get DNS servers
-dns_servers=$(scutil --dns 2>/dev/null | grep 'nameserver\[[0-9]*\]' | head -3 | awk '{print $3}' | tr '\n' ', ' | sed 's/, $//')
-if [[ -n "$dns_servers" ]]; then
-    echo -e "  🔗 DNS Servers: ${GREEN}$dns_servers${NC}"
-fi
-
-echo -e "\n${GREEN}✅ Network optimization complete!${NC}"
+echo "✅ Network optimization complete!"
 echo "Note: Some network changes may take a few moments to apply."
-
-# 3. Network Speed Test
-echo -e "\n${YELLOW}3. Testing Network Speed...${NC}"
-echo "------------------------------------------"
-
-# Check if networkQuality command exists (macOS 12+)
-if command -v networkQuality &> /dev/null; then
-    echo "Running Apple's network quality test..."
-    echo "------------------------------------------"
-    networkQuality
-    echo "------------------------------------------"
-    echo -e "${GREEN}✓ Network speed test completed${NC}"
-elif command -v speedtest &> /dev/null; then
-    echo "Running speedtest-cli..."
-    echo "------------------------------------------"
-    speedtest --simple
-    echo "------------------------------------------"
-    echo -e "${GREEN}✓ Network speed test completed${NC}"
-else
-    echo -e "${RED}✗ No network testing tool found${NC}"
-    echo "Install speedtest-cli: brew install speedtest-cli"
-    echo "Or update to macOS 12+ for built-in networkQuality"
-fi
-
-echo -e "\n${GREEN}Network optimization completed!${NC}"
-echo "========================================"
