@@ -14,15 +14,27 @@ echo ""
 
 # 2. Restart Active Network Services
 echo "2. Restarting Active Network Services..."
-# Find active network service (Wi-Fi or Ethernet)
-SERVICE=$(networksetup -listnetworkserviceorder | grep -E "Wi-Fi|Ethernet" | head -1 | sed -E 's/.*: (.*) \(.*/\1/')
-if [[ -n "$SERVICE" ]]; then
-    sudo networksetup -setnetworkserviceenabled "$SERVICE" off
+# Find the primary active network service (Wi-Fi or Ethernet)
+ACTIVE_SERVICE=$(networksetup -listnetworkserviceorder 2>/dev/null | grep -E "Wi-Fi|Ethernet|USB" | head -1 | sed -E 's/.*: (.*) \(.*\)/\1/')
+if [ -z "$ACTIVE_SERVICE" ]; then
+    # Fallback: use the service that has an IP
+    for SERVICE in $(networksetup -listallnetworkservices | grep -v "An asterisk"); do
+        IP=$(networksetup -getinfo "$SERVICE" 2>/dev/null | grep "IP address" | awk '{print $3}')
+        if [ -n "$IP" ] && [ "$IP" != "none" ]; then
+            ACTIVE_SERVICE="$SERVICE"
+            break
+        fi
+    done
+fi
+
+if [ -n "$ACTIVE_SERVICE" ]; then
+    echo "  Restarting: $ACTIVE_SERVICE"
+    sudo networksetup -setnetworkserviceenabled "$ACTIVE_SERVICE" off
     sleep 1
-    sudo networksetup -setnetworkserviceenabled "$SERVICE" on
-    echo "✓ Restarted: $SERVICE"
+    sudo networksetup -setnetworkserviceenabled "$ACTIVE_SERVICE" on
+    echo "✓ $ACTIVE_SERVICE restarted"
 else
-    echo "⚠ No active network service found"
+    echo "⚠️  No active network service found"
 fi
 echo ""
 
@@ -31,9 +43,8 @@ echo "3. Optimizing TCP/IP Parameters..."
 sudo sysctl -w net.inet.tcp.delayed_ack=0
 sudo sysctl -w net.inet.tcp.recvspace=65536
 sudo sysctl -w net.inet.tcp.sendspace=65536
-# Set max socket buffer (if not already higher)
 CURRENT_MAX=$(sysctl -n kern.ipc.maxsockbuf 2>/dev/null || echo "0")
-if [[ "$CURRENT_MAX" -lt 8388608 ]]; then
+if [ "$CURRENT_MAX" -lt 8388608 ]; then
     sudo sysctl -w kern.ipc.maxsockbuf=8388608
 fi
 echo "✓ TCP parameters optimized"
@@ -62,7 +73,7 @@ else
 fi
 echo ""
 
-# 5. Network Information
+# 6. Network Information
 echo "6. Network Information:"
 ACTIVE_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
 GATEWAY=$(route -n get default 2>/dev/null | grep gateway | awk '{print $2}')
