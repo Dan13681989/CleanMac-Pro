@@ -14,25 +14,29 @@ echo ""
 
 # 2. Restart Active Network Services
 echo "2. Restarting Active Network Services..."
-# Find the primary active network service (Wi-Fi or Ethernet)
-ACTIVE_SERVICE=$(networksetup -listnetworkserviceorder 2>/dev/null | grep -E "Wi-Fi|Ethernet|USB" | head -1 | sed -E 's/.*: (.*) \(.*\)/\1/')
-if [ -z "$ACTIVE_SERVICE" ]; then
-    # Fallback: use the service that has an IP
-    for SERVICE in $(networksetup -listallnetworkservices | grep -v "An asterisk"); do
-        IP=$(networksetup -getinfo "$SERVICE" 2>/dev/null | grep "IP address" | awk '{print $3}')
-        if [ -n "$IP" ] && [ "$IP" != "none" ]; then
-            ACTIVE_SERVICE="$SERVICE"
-            break
-        fi
-    done
-fi
+# Find primary active network service by checking for a valid IP
+ACTIVE_SERVICE=""
+for SERVICE in $(networksetup -listallnetworkservices | grep -v "An asterisk" | tail -n +2); do
+    # Trim whitespace
+    SERVICE=$(echo "$SERVICE" | xargs)
+    IP=$(networksetup -getinfo "$SERVICE" 2>/dev/null | grep "IP address:" | awk '{print $3}')
+    if [ -n "$IP" ] && [ "$IP" != "none" ]; then
+        ACTIVE_SERVICE="$SERVICE"
+        break
+    fi
+done
 
 if [ -n "$ACTIVE_SERVICE" ]; then
     echo "  Restarting: $ACTIVE_SERVICE"
-    sudo networksetup -setnetworkserviceenabled "$ACTIVE_SERVICE" off
+    # Disable and enable the service (ignore errors)
+    sudo networksetup -setnetworkserviceenabled "$ACTIVE_SERVICE" off 2>/dev/null
     sleep 1
-    sudo networksetup -setnetworkserviceenabled "$ACTIVE_SERVICE" on
-    echo "✓ $ACTIVE_SERVICE restarted"
+    sudo networksetup -setnetworkserviceenabled "$ACTIVE_SERVICE" on 2>/dev/null
+    if [ $? -eq 0 ]; then
+        echo "✓ $ACTIVE_SERVICE restarted"
+    else
+        echo "⚠️  Could not restart $ACTIVE_SERVICE (may require admin or be disabled)"
+    fi
 else
     echo "⚠️  No active network service found"
 fi
@@ -40,12 +44,12 @@ echo ""
 
 # 3. Optimize TCP/IP Parameters
 echo "3. Optimizing TCP/IP Parameters..."
-sudo sysctl -w net.inet.tcp.delayed_ack=0
-sudo sysctl -w net.inet.tcp.recvspace=65536
-sudo sysctl -w net.inet.tcp.sendspace=65536
+sudo sysctl -w net.inet.tcp.delayed_ack=0 2>/dev/null || true
+sudo sysctl -w net.inet.tcp.recvspace=65536 2>/dev/null || true
+sudo sysctl -w net.inet.tcp.sendspace=65536 2>/dev/null || true
 CURRENT_MAX=$(sysctl -n kern.ipc.maxsockbuf 2>/dev/null || echo "0")
 if [ "$CURRENT_MAX" -lt 8388608 ]; then
-    sudo sysctl -w kern.ipc.maxsockbuf=8388608
+    sudo sysctl -w kern.ipc.maxsockbuf=8388608 2>/dev/null || true
 fi
 echo "✓ TCP parameters optimized"
 echo ""
