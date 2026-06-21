@@ -33,22 +33,29 @@ else
 fi
 echo ""
 
-# 4. Speed Test (improved)
+# 4. Speed Test (optional – skip if not available)
 echo "4. Running Speed Test..."
+SPEED_OK=false
 if command -v speedtest-cli &>/dev/null; then
-    echo "  Using Ookla speedtest-cli..."
-    speedtest-cli --simple 2>/dev/null || echo "  Speed test failed (temporary issue)"
-elif command -v networkQuality &>/dev/null; then
-    echo "  Using Apple networkQuality (macOS 13+)..."
-    # networkQuality may need sudo or may work without; capture output
-    if sudo networkQuality -v 2>/dev/null | grep -E "(downlink|uplink)" | head -2; then
-        :
+    echo "  Using speedtest-cli..."
+    if speedtest-cli --simple 2>/dev/null; then
+        SPEED_OK=true
     else
-        echo "  Speed test failed – try again later or install speedtest-cli"
+        echo "  speedtest-cli failed – skipping"
+    fi
+elif command -v networkQuality &>/dev/null; then
+    echo "  Using Apple networkQuality..."
+    if networkQuality -v 2>/dev/null | grep -E "(downlink|uplink)" >/dev/null; then
+        SPEED_OK=true
+    else
+        echo "  networkQuality failed – skipping"
     fi
 else
-    echo "  Speed test not available. Install with: brew install speedtest-cli"
-    echo "  Or use Apple's networkQuality (built-in on macOS 13+)."
+    echo "  No speed test tool found – install speedtest-cli (brew install speedtest-cli)"
+fi
+
+if [ "$SPEED_OK" = false ]; then
+    echo "  ℹ️  Speed test skipped (optional). Network optimization already applied."
 fi
 echo ""
 
