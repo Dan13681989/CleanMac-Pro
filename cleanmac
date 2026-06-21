@@ -179,14 +179,14 @@ cmd_network() {
     case "$sub" in
         status)
             if [[ "$JSON_OUT" == true ]]; then
-                PUBLIC_IP=$(curl -s --max-time 3 ipinfo.io/ip 2>/dev/null || curl -s --max-time 3 ifconfig.me 2>/dev/null)
+                PUBLIC_IP=$(curl -s --max-time 3 ipinfo.io/ip 2>/dev/null || curl -s --max-time 3 ifconfig.me 2>/dev/null || curl -s --max-time 3 icanhazip.com 2>/dev/null || echo "Unavailable")
                 LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
                 [ -z "$LOCAL_IP" ] && LOCAL_IP="Not connected"
                 DNS=$(scutil --dns | grep 'nameserver\[[0-9]*\]' | awk '{print $3}' | sort -u | tr '\n' ' ')
                 echo "{\"public_ip\": \"$PUBLIC_IP\", \"local_ip\": \"$LOCAL_IP\", \"dns_servers\": [$(echo "$DNS" | sed 's/ /", "/g' | sed 's/^/"/;s/ $//')]}"
             else
                 echo "=== Network Status ==="
-                PUBLIC_IP=$(curl -s --max-time 3 ipinfo.io/ip 2>/dev/null || curl -s --max-time 3 ifconfig.me 2>/dev/null)
+                PUBLIC_IP=$(curl -s --max-time 3 ipinfo.io/ip 2>/dev/null || curl -s --max-time 3 ifconfig.me 2>/dev/null || curl -s --max-time 3 icanhazip.com 2>/dev/null || echo "Unavailable")
                 [ -z "$PUBLIC_IP" ] && PUBLIC_IP="Unable to fetch"
                 echo "Public IP: $PUBLIC_IP"
                 LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
