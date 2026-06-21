@@ -23,7 +23,7 @@ set -euo pipefail
 # ============================================
 # Configuration
 # ============================================
-VERSION="3.0.28"
+VERSION="3.0.29"
 LOG_DIR="$HOME/.cleanmac"
 LOG_FILE="$LOG_DIR/cleanmac.log"
 CONFIG_FILE="$LOG_DIR/config"
