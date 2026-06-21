@@ -1,29 +1,10 @@
-# MIT License
-# Copyright (c) 2026 Dan13681989
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.n
 #!/bin/bash
 set -euo pipefail
 
 # ============================================
 # Configuration
 # ============================================
-VERSION="3.0.29"
+VERSION="3.1.0"
 LOG_DIR="$HOME/.cleanmac"
 LOG_FILE="$LOG_DIR/cleanmac.log"
 CONFIG_FILE="$LOG_DIR/config"
@@ -133,9 +114,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ============================================
-# Command handlers with enhancements
+# Command handlers
 # ============================================
 cmd_clean() {
+    local force=false
+    for arg in "$@"; do
+        if [[ "$arg" == "--force" ]]; then
+            force=true
+            shift
+        fi
+    done
     check_sudo
     if [[ "$JSON_OUT" == true ]]; then
         local output
@@ -143,8 +131,16 @@ cmd_clean() {
         output=$(echo "$output" | sed 's/"/\\"/g' | awk '{print "\""$0"\\n"}' | tr -d '\n' | sed 's/\\n$//')
         echo "{\"dry_run\": true, \"actions\": \"$output\"}"
     else
-        exec sudo "$PREFIX/cleanmac-clean-now" "$@"
+        if [[ "$force" == true ]]; then
+            exec sudo "$PREFIX/cleanmac-clean-now" --force "$@"
+        else
+            exec sudo "$PREFIX/cleanmac-clean-now" "$@"
+        fi
     fi
+}
+
+cmd_dashboard() {
+    exec "$PREFIX/cleanmac-dashboard" "$@"
 }
 
 cmd_analyze() {
@@ -187,7 +183,6 @@ cmd_network() {
             else
                 echo "=== Network Status ==="
                 PUBLIC_IP=$(curl -s --max-time 3 ipinfo.io/ip 2>/dev/null || curl -s --max-time 3 ifconfig.me 2>/dev/null || curl -s --max-time 3 icanhazip.com 2>/dev/null || echo "Unavailable")
-                [ -z "$PUBLIC_IP" ] && PUBLIC_IP="Unable to fetch"
                 echo "Public IP: $PUBLIC_IP"
                 LOCAL_IP=$(ifconfig | grep -E "inet ([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
                 [ -z "$LOCAL_IP" ] && LOCAL_IP="Not connected"
@@ -274,6 +269,86 @@ cmd_uninstall() {
     exec "$PREFIX/uninstall.sh"
 }
 
+# ---- NEW COMMANDS ----
+cmd_system_info() {
+    echo "=== System Information ==="
+    echo "Hostname: $(scutil --get ComputerName 2>/dev/null || echo 'Unknown')"
+    echo "macOS: $(sw_vers -productVersion 2>/dev/null || echo 'Unknown')"
+    echo "Kernel: $(uname -r 2>/dev/null || echo 'Unknown')"
+    echo "Uptime: $(uptime | awk -F'up ' '{print $2}' | awk -F',' '{print $1}')"
+    echo "CPU: $(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo 'Unknown')"
+    echo "Cores: $(sysctl -n hw.ncpu 2>/dev/null || echo 'Unknown')"
+    echo "Memory: $(($(sysctl -n hw.memsize 2>/dev/null || echo 0) / 1073741824)) GB"
+    echo "Disk: $(df -h / | awk 'NR==2 {print $4 " free of " $2}')"
+}
+
+cmd_battery() {
+    if [[ -f /sys/class/power_supply/BAT0/uevent ]]; then
+        # Linux
+        echo "Battery information not available on macOS"
+    else
+        # macOS
+        local batt_info=$(system_profiler SPPowerDataType 2>/dev/null | grep -E "Cycle Count|Health|Condition")
+        if [[ -n "$batt_info" ]]; then
+            echo "=== Battery Information ==="
+            echo "$batt_info"
+        else
+            echo "No battery detected (or not a laptop)."
+        fi
+    fi
+}
+
+cmd_apps() {
+    echo "=== Large Applications ==="
+    echo "Scanning /Applications and ~/Applications..."
+    echo "Showing apps > 1GB:"
+    find /Applications ~/Applications -maxdepth 3 -name "*.app" -type d -exec du -sm {} \; 2>/dev/null | sort -nr | awk '$1 > 1024 {printf "%.2f GB\t%s\n", $1/1024, $2}' | head -20
+    echo ""
+    echo "To remove an app, drag it to Trash or use: brew uninstall <app>"
+}
+
+cmd_schedule() {
+    local action="${1:-help}"
+    shift || true
+    case "$action" in
+        add)
+            local freq="${1:-weekly}"
+            local script_path="$PREFIX/cleanmac-clean-now"
+            local log_path="$LOG_DIR/scheduled.log"
+            local cron_cmd="$script_path >> $log_path 2>&1"
+            case "$freq" in
+                daily)   local schedule="0 2 * * *" ;;
+                weekly)  local schedule="0 2 * * 0" ;;
+                monthly) local schedule="0 2 1 * *" ;;
+                *) error "Frequency must be daily, weekly, or monthly" ;;
+            esac
+            echo "Adding schedule: $freq (cron: $schedule)"
+            (crontab -l 2>/dev/null; echo "$schedule $cron_cmd") | crontab -
+            echo "Schedule added. Logs: $log_path"
+            ;;
+        remove)
+            echo "Removing all CleanMac Pro scheduled jobs..."
+            crontab -l 2>/dev/null | grep -v "cleanmac-clean-now" | crontab -
+            echo "Scheduled jobs removed."
+            ;;
+        status)
+            echo "Current scheduled jobs:"
+            crontab -l 2>/dev/null | grep "cleanmac" || echo "No CleanMac jobs found."
+            ;;
+        help|--help|-h)
+            cat << SCHEDHELP
+Schedule Management:
+  cleanmac schedule add daily|weekly|monthly   Add a recurring cleaning job
+  cleanmac schedule remove                      Remove all scheduled jobs
+  cleanmac schedule status                      Show current scheduled jobs
+SCHEDHELP
+            ;;
+        *)
+            error "Unknown schedule action: $action\nRun 'cleanmac schedule help'"
+            ;;
+    esac
+}
+
 # ============================================
 # Main CLI
 # ============================================
@@ -284,7 +359,7 @@ rotate_logs
 
 case "$COMMAND" in
     clean)            cmd_clean "$@" ;;
-    dashboard)        exec "$PREFIX/cleanmac-dashboard" "$@" ;;
+    dashboard)        cmd_dashboard "$@" ;;
     analyze)          cmd_analyze "$@" ;;
     large-files)      cmd_large_files "$@" ;;
     docker)           cmd_docker "$@" ;;
@@ -292,6 +367,10 @@ case "$COMMAND" in
     uninstall)        cmd_uninstall ;;
     upgrade)          cmd_upgrade ;;
     network)          cmd_network "$@" ;;
+    system-info)      cmd_system_info ;;
+    battery)          cmd_battery ;;
+    apps)             cmd_apps ;;
+    schedule)         cmd_schedule "$@" ;;
     version|--version|-v)
         echo "CleanMac Pro v$VERSION"
         ;;
@@ -307,28 +386,35 @@ Global options:
   --version, -v     Show version
 
 Commands:
-  clean [--dry-run]         Run system cleaner (--dry-run to preview)
-  dashboard                 Launch interactive TUI
-  analyze                   Analyze disk usage (requires ncdu)
-  large-files               Find large files (>100MB)
-  docker                    Clean Docker containers/images
-  security                  Run security scan
-  network <subcommand>      Network tools (status, flush-dns, optimize, reset, monitor)
-  upgrade                   Self‑upgrade (git clone only)
-  uninstall                 Remove CleanMac Pro completely
-  version                   Show version
-  help                      Show this help
+  clean [--dry-run] [--force]  Run system cleaner (--dry-run to preview, --force to bypass confirm)
+  dashboard                    Launch interactive TUI
+  analyze                      Analyze disk usage (requires ncdu)
+  large-files                  Find large files (>100MB)
+  docker                       Clean Docker containers/images
+  security                     Run security scan
+  network <subcommand>         Network tools (status, flush-dns, optimize, reset, monitor)
+  system-info                  Display system hardware and OS info
+  battery                      Show battery health and cycle count (laptops)
+  apps                         List large applications (>1GB)
+  schedule <add|remove|status> Manage automated cleaning (cron/launchd)
+  upgrade                      Self‑upgrade (git clone only)
+  uninstall                    Remove CleanMac Pro completely
+  version                      Show version
+  help                         Show this help
 
 Examples:
   cleanmac clean --dry-run --json     # JSON preview
   cleanmac clean --quiet              # Silent cleaning
   cleanmac network reset              # Revert TCP tuning
   cleanmac analyze                    # Interactive disk usage
+  cleanmac system-info                # Quick system overview
+  cleanmac apps                       # Find large apps
+  cleanmac schedule add weekly        # Auto‑clean every Sunday
 
 Report issues: https://github.com/Dan13681989/CleanMac-Pro/issues
 HELP
         ;;
     *)
-        error "Unknown command: $COMMAND\nRun 'cleanmac help' for usage"
+        error "Unknown command: $COMMAND\nRun 'clemac help' for usage"
         ;;
 esac
