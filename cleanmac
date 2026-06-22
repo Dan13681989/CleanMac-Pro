@@ -4,7 +4,7 @@ set -euo pipefail
 # ============================================
 # Configuration
 # ============================================
-VERSION="3.1.0"
+VERSION="3.2.0"
 LOG_DIR="$HOME/.cleanmac"
 LOG_FILE="$LOG_DIR/cleanmac.log"
 CONFIG_FILE="$LOG_DIR/config"
@@ -226,6 +226,11 @@ cmd_network() {
                 error "Network monitor not available. Reinstall with: brew reinstall cleanmac-pro"
             fi
             ;;
+        ping)
+            local target="${1:-8.8.8.8}"
+            echo "Pinging $target..."
+            ping -c 5 "$target"
+            ;;
         help|--help|-h)
             cat << NETHELP
 Network Commands:
@@ -234,6 +239,7 @@ Network Commands:
   cleanmac network optimize    Apply DNS + TCP optimizations
   cleanmac network reset       Reset TCP to macOS defaults
   cleanmac network monitor     Launch network monitor (if available)
+  cleanmac network ping <host> Ping a host (default: 8.8.8.8)
 NETHELP
             ;;
         *)
@@ -269,7 +275,74 @@ cmd_uninstall() {
     exec "$PREFIX/uninstall.sh"
 }
 
-# ---- NEW COMMANDS ----
+# ---- New commands ----
+cmd_startup() {
+    local action="${1:-list}"
+    shift || true
+    case "$action" in
+        list)
+            osascript -e 'tell application "System Events" to get the name of every login item' 2>/dev/null || echo "No login items found"
+            ;;
+        add)
+            if [[ -z "$1" ]]; then
+                error "Usage: cleanmac startup add <path/to/app.app>"
+            fi
+            osascript -e "tell application \"System Events\" to make login item at end with properties {path:\"$1\", hidden:false}" 2>/dev/null
+            echo "Added: $1"
+            ;;
+        remove)
+            if [[ -z "$1" ]]; then
+                error "Usage: cleanmac startup remove <app name>"
+            fi
+            osascript -e "tell application \"System Events\" to delete login item \"$1\"" 2>/dev/null
+            echo "Removed: $1"
+            ;;
+        *)
+            error "Unknown startup action: $action\nUsage: cleanmac startup [list|add|remove]"
+            ;;
+    esac
+}
+
+cmd_defaults() {
+    local action="${1:-help}"
+    shift || true
+    case "$action" in
+        show-hidden-files)
+            local status=$(defaults read com.apple.finder AppleShowAllFiles 2>/dev/null || echo "0")
+            if [[ "$status" == "1" ]]; then
+                echo "Hidden files are shown"
+            else
+                echo "Hidden files are hidden"
+            fi
+            ;;
+        toggle-hidden-files)
+            local status=$(defaults read com.apple.finder AppleShowAllFiles 2>/dev/null || echo "0")
+            if [[ "$status" == "1" ]]; then
+                defaults write com.apple.finder AppleShowAllFiles -bool false
+                echo "Hidden files hidden"
+            else
+                defaults write com.apple.finder AppleShowAllFiles -bool true
+                echo "Hidden files shown"
+            fi
+            killall Finder 2>/dev/null || true
+            ;;
+        show-path-in-finder)
+            defaults write com.apple.finder ShowPathbar -bool true
+            killall Finder 2>/dev/null || true
+            echo "Path bar shown in Finder"
+            ;;
+        *)
+            cat << DEFAULTSHELP
+Defaults Management:
+  cleanmac defaults show-hidden-files      Show current hidden files status
+  cleanmac defaults toggle-hidden-files    Toggle showing hidden files
+  cleanmac defaults show-path-in-finder    Show path bar in Finder windows
+DEFAULTSHELP
+            ;;
+    esac
+}
+
+# ---- Existing commands (system-info, battery, apps, schedule) ----
 cmd_system_info() {
     echo "=== System Information ==="
     echo "Hostname: $(scutil --get ComputerName 2>/dev/null || echo 'Unknown')"
@@ -283,18 +356,12 @@ cmd_system_info() {
 }
 
 cmd_battery() {
-    if [[ -f /sys/class/power_supply/BAT0/uevent ]]; then
-        # Linux
-        echo "Battery information not available on macOS"
+    local batt_info=$(system_profiler SPPowerDataType 2>/dev/null | grep -E "Cycle Count|Health|Condition")
+    if [[ -n "$batt_info" ]]; then
+        echo "=== Battery Information ==="
+        echo "$batt_info"
     else
-        # macOS
-        local batt_info=$(system_profiler SPPowerDataType 2>/dev/null | grep -E "Cycle Count|Health|Condition")
-        if [[ -n "$batt_info" ]]; then
-            echo "=== Battery Information ==="
-            echo "$batt_info"
-        else
-            echo "No battery detected (or not a laptop)."
-        fi
+        echo "No battery detected (or not a laptop)."
     fi
 }
 
@@ -371,6 +438,8 @@ case "$COMMAND" in
     battery)          cmd_battery ;;
     apps)             cmd_apps ;;
     schedule)         cmd_schedule "$@" ;;
+    startup)          cmd_startup "$@" ;;
+    defaults)         cmd_defaults "$@" ;;
     version|--version|-v)
         echo "CleanMac Pro v$VERSION"
         ;;
@@ -392,11 +461,13 @@ Commands:
   large-files                  Find large files (>100MB)
   docker                       Clean Docker containers/images
   security                     Run security scan
-  network <subcommand>         Network tools (status, flush-dns, optimize, reset, monitor)
+  network <subcommand>         Network tools (status, flush-dns, optimize, reset, monitor, ping)
   system-info                  Display system hardware and OS info
   battery                      Show battery health and cycle count (laptops)
   apps                         List large applications (>1GB)
   schedule <add|remove|status> Manage automated cleaning (cron/launchd)
+  startup <list|add|remove>    Manage login items
+  defaults <subcommand>        Manage macOS defaults (show/toggle hidden files, show path in Finder)
   upgrade                      Self‑upgrade (git clone only)
   uninstall                    Remove CleanMac Pro completely
   version                      Show version
@@ -410,11 +481,14 @@ Examples:
   cleanmac system-info                # Quick system overview
   cleanmac apps                       # Find large apps
   cleanmac schedule add weekly        # Auto‑clean every Sunday
+  cleanmac startup list               # Show login items
+  cleanmac defaults toggle-hidden-files # Show hidden files in Finder
+  cleanmac network ping google.com    # Ping a host
 
 Report issues: https://github.com/Dan13681989/CleanMac-Pro/issues
 HELP
         ;;
     *)
-        error "Unknown command: $COMMAND\nRun 'clemac help' for usage"
+        error "Unknown command: $COMMAND\nRun 'cleanmac help' for usage"
         ;;
 esac
