@@ -23,6 +23,7 @@
 
 ### Homebrew (recommended)
 ```bash
+
 brew tap Dan13681989/cleanmac
 brew install cleanmac-pro
 Manual (from source)
@@ -31,12 +32,14 @@ bash
 git clone https://github.com/Dan13681989/CleanMac-Pro.git
 cd CleanMac-Pro
 ./install.sh
+
 📦 Requirements
 
 macOS 10.15 (Catalina) or newer
 Apple Silicon or Intel
 Some features require sudo (system caches, network optimisation)
 Optional: ncdu for interactive disk analysis (brew install ncdu)
+
 🎮 Usage
 
 bash
@@ -61,6 +64,7 @@ Global options
 --quiet – suppress non‑essential output
 --json – machine‑readable JSON (dry‑run only)
 --log-level debug|info|error – set verbosity
+
 ⚙️ Configuration
 
 Create ~/.cleanmac/config to set defaults:
@@ -68,12 +72,14 @@ Create ~/.cleanmac/config to set defaults:
 bash
 QUIET=true
 LOG_LEVEL=info
+
 🛡️ Safety First
 
 All destructive operations show a preview with --dry-run
 Nothing is deleted without your confirmation (unless you use --force)
 No telemetry or external network calls (except public IP lookup)
 Logs saved to ~/.cleanmac/cleanmac.log (rotated at 5MB)
+
 🤝 Contributing
 
 See CONTRIBUTING.md.
