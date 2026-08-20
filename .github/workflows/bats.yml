@@ -15,10 +15,5 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y bats
-      - name: Debug files
-        run: |
-          pwd
-          ls -la
-          ls -la test.bats || true
       - name: Run bats tests
         run: bats test.bats
