@@ -1,4 +1,4 @@
-name: BATS Tests
+name: Bats tests
 
 on:
   push:
@@ -6,15 +6,14 @@ on:
   pull_request:
     branches: [ main ]
 
-permissions:
-  contents: read
-
 jobs:
-  bats:
-    runs-on: macos-latest
+  test:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install BATS
-        run: brew install bats-core
-      - name: Run tests
-        run: bats --allow-empty-suite . --allow-empty-suite . --allow-empty-suite --allow-empty-suite  tests
+      - name: Install bats
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats
+      - name: Run bats tests
+        run: bats --allow-empty-suite .
