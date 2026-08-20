@@ -17,4 +17,4 @@ jobs:
       - name: Install BATS
         run: brew install bats-core
       - name: Run tests
-        run: bats --allow-empty-suite . --allow-empty-suite --allow-empty-suite  tests
+        run: bats --allow-empty-suite . --allow-empty-suite . --allow-empty-suite --allow-empty-suite  tests
