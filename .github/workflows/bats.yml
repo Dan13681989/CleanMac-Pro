@@ -8,12 +8,12 @@ on:
 
 jobs:
   test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install bats
-        env:
-          HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
-        run: brew install bats-core
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats
       - name: Run bats tests
         run: bats test.bats
