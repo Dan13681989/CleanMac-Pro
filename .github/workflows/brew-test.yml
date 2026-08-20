@@ -12,8 +12,8 @@ jobs:
     steps:
       - name: Tap and install
         run: |
-          brew tap Dan13681989/cleanmac
-          brew install cleanmac-pro
+          HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew tap Dan13681989/cleanmac
+          HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew install cleanmac-pro
           cleanmac version
           cleanmac help
   test-arm:
@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Tap and install
         run: |
-          brew tap Dan13681989/cleanmac
-          brew install cleanmac-pro
+          HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew tap Dan13681989/cleanmac
+          HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew install cleanmac-pro
           cleanmac version
           cleanmac help
