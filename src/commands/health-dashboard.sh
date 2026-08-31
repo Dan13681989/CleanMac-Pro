@@ -17,7 +17,7 @@ generate_health_report() {
     echo "  Usage: $cpu_usage%"
     echo "  Temperature: $cpu_temp"
     
-    if [ "$cpu_usage" -gt 80 ]; then
+    if [ $(echo "$cpu_usage > 80" | bc -l) -eq 1 ]; then
         health_score=$((health_score - 10))
         echo "  ⚠️  High CPU usage"
     fi

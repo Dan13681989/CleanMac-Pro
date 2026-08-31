@@ -30,7 +30,7 @@ show_dashboard() {
     echo -e "🧠 Memory Free: ${memory_free}%"
     
     # AI recommendations
-    if [ "$cpu_usage" -gt 70 ]; then
+    if [ $(echo "$cpu_usage > 70" | bc -l) -eq 1 ]; then
         echo -e "🎯 AI Tip: ${YELLOW}High CPU - Try performance boost${NC}"
     elif [ "$memory_free" -lt 20 ]; then
         echo -e "🎯 AI Tip: ${YELLOW}Low memory - Run quick clean${NC}"

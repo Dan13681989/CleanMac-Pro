@@ -1,95 +1,49 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ============================================================
+# CleanMac-Pro Main Router
+# ============================================================
+# Usage: cleanmac [subcommand] [options]
+# Subcommands: clean, analyze, network, security, docker, etc.
+# ============================================================
 
-# CleanMac Pro Main Script
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMANDS_DIR="$SCRIPT_DIR/src/commands"
 
-show_dashboard() {
-    clear
-    echo -e "${CYAN}"
-    echo "=========================================="
-    echo "           CLEANMAC PRO v3.0"
-    echo "           Main Console"
-    echo "=========================================="
-    echo -e "${NC}"
-}
+# Source the shared library for logging
+source "$SCRIPT_DIR/lib/common.sh"
 
-quick_clean() {
-    echo -e "${YELLOW}🧹 Running quick cleanup...${NC}"
-    find ~/Library/Caches -type f -atime +1 -delete 2>/dev/null
-    sudo purge 2>/dev/null
-    echo -e "${GREEN}✅ Quick cleanup completed!${NC}"
-    read -p "Press [Enter] to continue..."
-}
+# Show usage if no arguments
+if [[ $# -eq 0 ]]; then
+    echo "CleanMac-Pro - macOS maintenance toolkit"
+    echo ""
+    echo "Usage: $0 <subcommand> [options]"
+    echo ""
+    echo "Available subcommands:"
+    for cmd in "$COMMANDS_DIR"/*.sh; do
+        if [[ -x "$cmd" ]]; then
+            basename "$cmd" .sh
+        fi
+    done | sort
+    echo ""
+    echo "For help on a subcommand, run: $0 <subcommand> --help"
+    exit 0
+fi
 
-performance_boost() {
-    echo -e "${YELLOW}🚀 Boosting performance...${NC}"
-    sudo purge 2>/dev/null
-    sudo dscacheutil -flushcache
-    sudo killall -HUP mDNSResponder
-    echo -e "${GREEN}✅ Performance boost applied!${NC}"
-    read -p "Press [Enter] to continue..."
-}
+SUBCOMMAND="$1"
+shift
 
-security_scan() {
-    echo -e "${YELLOW}🛡️ Running security scan...${NC}"
-    echo -e "Firewall: $(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null || echo 'Unknown')"
-    echo -e "SIP: $(csrutil status 2>/dev/null | head -1)"
-    echo -e "${GREEN}✅ Security scan completed!${NC}"
-    read -p "Press [Enter] to continue..."
-}
+# Find the script (exact match for the basename)
+SCRIPT_PATH="$COMMANDS_DIR/${SUBCOMMAND}.sh"
+if [[ ! -f "$SCRIPT_PATH" ]]; then
+    # Try with a dash prefix? e.g., clean -> cleanmac-clean? No, we moved all to exact names.
+    # We could also look for a script that starts with the subcommand, but we'll keep it simple.
+    log_error "Unknown subcommand: '$SUBCOMMAND'"
+    log_info "Run '$0' without arguments to see available commands."
+    exit 1
+fi
 
-main_menu() {
-    while true; do
-        show_dashboard
-        echo -e "${CYAN}🚀 MAIN MENU${NC}"
-        echo "=========================================="
-        echo "1) 🧹 Quick Clean"
-        echo "2) 🚀 Performance Boost"
-        echo "3) 🛡️ Security Scan"
-        echo "4) 🖥️ Launch GUI Version"
-        echo "5) 🔋 Battery Health"
-        echo "6) 🌐 Network Tools"
-        echo "7) ❌ Exit"
-        echo ""
-        
-        read -p "Select option [1-7]: " choice
-        case $choice in
-            1) quick_clean ;;
-            2) performance_boost ;;
-            3) security_scan ;;
-            4) ./cleanmac-gui.sh ;;
-            5) ./battery-health.sh --check ;;
-            6) ./network-optimizer.sh --info ;;
-            7) 
-                echo -e "${GREEN}👋 Thank you for using CleanMac Pro!${NC}"
-                exit 0 
-                ;;
-            *) 
-                echo -e "${RED}Invalid option. Please try again.${NC}"
-                sleep 1
-                ;;
-        esac
-    done
-}
+# Make sure it's executable
+chmod +x "$SCRIPT_PATH" 2>/dev/null
 
-# Command line interface
-case "${1:-}" in
-    "--clean") quick_clean ;;
-    "--performance") performance_boost ;;
-    "--security") security_scan ;;
-    "--gui") ./cleanmac-gui.sh ;;
-    "--help")
-        echo "CleanMac Pro v3.0 - Usage:"
-        echo "  ./cleanmac.sh              # Interactive menu"
-        echo "  ./cleanmac.sh --clean      # Quick cleanup"
-        echo "  ./cleanmac.sh --performance # Performance boost"
-        echo "  ./cleanmac.sh --security   # Security scan"
-        echo "  ./cleanmac.sh --gui        # Launch GUI"
-        ;;
-    *) main_menu ;;
-esac
+# Execute the script, passing the remaining arguments
+exec "$SCRIPT_PATH" "$@"

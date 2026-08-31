@@ -1,31 +1,17 @@
-name: Test CleanMac Pro
+name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, refactor/* ]
   pull_request:
     branches: [ main ]
 
 jobs:
   test:
     runs-on: macos-latest
-    
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Make scripts executable
-      run: chmod +x *.sh
-      
-    - name: Test Help Command
-      run: ./cleanmac.sh --help
-      
-    - name: Test System Info
-      run: ./cleanmac.sh --sys-info
-      
-    - name: Test Health Score (basic)
-      run: |
-        # Basic test that doesn't fail on load variations
-        ./cleanmac.sh --health-score || echo "Health score completed"
-        
-    - name: Test Security Scan
-      run: ./cleanmac.sh --security-scan
+      - uses: actions/checkout@v4
+      - name: Install Bats
+        run: brew install bats-core
+      - name: Run tests
+        run: bats test/
