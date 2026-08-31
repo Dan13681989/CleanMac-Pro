@@ -17,7 +17,7 @@
   [[ "$output" == *"Unknown subcommand"* ]]
 }
 
-@test "a subcommand (undo) runs without error (or shows usage)" {
-  run ./cleanmac.sh undo --auto
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+@test "subcommand schedule shows usage" {
+  run ./cleanmac.sh schedule
+  [[ "$output" == *"Usage:"* ]]
 }
