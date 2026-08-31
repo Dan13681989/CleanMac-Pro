@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 echo "🔧 CLEANMAC PRO COMPATIBILITY CHECK"
 echo "=========================================="
 

@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # CleanMac Pro GUI - Terminal-based Graphical Interface
 
 VERSION="3.0"
@@ -77,19 +88,19 @@ deep_clean() {
     find ~/Library/Caches -type f -atime +1 -delete 2>/dev/null
     
     echo "Cleaning system caches..."
-    sudo find /Library/Caches -type f -atime +7 -delete 2>/dev/null 2>&1
+    run_with_sudo find /Library/Caches -type f -atime +7 -delete 2>/dev/null 2>&1
     
     echo "Cleaning logs..."
-    sudo log show --info --last 1d > /dev/null 2>&1
+    run_with_sudo log show --info --last 1d > /dev/null 2>&1
     
     echo "Cleaning temporary files..."
-    sudo rm -rf /private/var/folders/*/*/*/tmp/* 2>/dev/null
+    run_with_sudo move_to_trash /private/var/folders/*/*/*/tmp/* 2>/dev/null
     
     echo "Cleaning browser caches..."
-    rm -rf ~/Library/Caches/com.apple.Safari 2>/dev/null
-    rm -rf ~/Library/Caches/com.google.Chrome 2>/dev/null
+    move_to_trash ~/Library/Caches/com.apple.Safari 2>/dev/null
+    move_to_trash ~/Library/Caches/com.google.Chrome 2>/dev/null
     
-    sudo purge 2>/dev/null
+    run_with_sudo purge 2>/dev/null
     echo -e "${GREEN}✅ Deep cleanup completed!${NC}"
     read -p "Press [Enter] to continue..."
     show_dashboard
@@ -100,16 +111,16 @@ performance_boost() {
     echo "=========================================="
     
     # Purge memory
-    sudo purge
+    run_with_sudo purge
     echo -e "${GREEN}✅ Memory purged${NC}"
     
     # Clear DNS cache
-    sudo dscacheutil -flushcache
-    sudo killall -HUP mDNSResponder
+    run_with_sudo dscacheutil -flushcache
+    run_with_sudo killall -HUP mDNSResponder
     echo -e "${GREEN}✅ DNS cache cleared${NC}"
     
     # Restart core services
-    sudo launchctl kickstart -k system/com.apple.WindowServer
+    run_with_sudo launchctl kickstart -k system/com.apple.WindowServer
     echo -e "${GREEN}✅ WindowServer restarted${NC}"
     
     echo -e "${BLUE}🎉 Performance boost complete!${NC}"

@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # CleanMac Pro Network Optimizer - Fixed Version
 
 optimize_network() {
@@ -6,13 +17,13 @@ optimize_network() {
     echo "=========================================="
     
     echo "🔄 Flushing DNS cache..."
-    sudo dscacheutil -flushcache
-    sudo killall -HUP mDNSResponder
+    run_with_sudo dscacheutil -flushcache
+    run_with_sudo killall -HUP mDNSResponder
     echo "✅ DNS cache flushed"
     
     echo "🔄 Resetting network interfaces..."
-    sudo ifconfig en0 down 2>/dev/null
-    sudo ifconfig en0 up 2>/dev/null
+    run_with_sudo ifconfig en0 down 2>/dev/null
+    run_with_sudo ifconfig en0 up 2>/dev/null
     echo "✅ Network interfaces reset"
     
     echo "🎉 Network optimization complete!"

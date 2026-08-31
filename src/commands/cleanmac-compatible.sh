@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # CleanMac Pro Compatible Version - Works on all macOS versions
 clear
 echo "=========================================="
@@ -54,16 +65,16 @@ while true; do
         1)
             echo "🧹 Running quick cleanup..."
             # Safe cleanup commands
-            rm -rf ~/Library/Caches/* 2>/dev/null
-            sudo rm -rf /Library/Caches/* 2>/dev/null
-            sudo purge 2>/dev/null
+            move_to_trash ~/Library/Caches/* 2>/dev/null
+            run_with_sudo move_to_trash /Library/Caches/* 2>/dev/null
+            run_with_sudo purge 2>/dev/null
             echo "✅ Quick cleanup completed!"
             ;;
         2)
             echo "🚀 Boosting performance..."
-            sudo purge 2>/dev/null
-            sudo dscacheutil -flushcache 2>/dev/null
-            sudo killall -HUP mDNSResponder 2>/dev/null
+            run_with_sudo purge 2>/dev/null
+            run_with_sudo dscacheutil -flushcache 2>/dev/null
+            run_with_sudo killall -HUP mDNSResponder 2>/dev/null
             echo "✅ Performance boosted!"
             ;;
         3)

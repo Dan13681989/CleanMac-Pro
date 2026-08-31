@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # CleanMac Pro Battery Health Monitor - Fixed Version
 
 check_battery_health() {
@@ -61,9 +72,9 @@ optimize_battery() {
     echo "⚡ OPTIMIZING BATTERY SETTINGS"
     echo "=========================================="
     
-    sudo pmset -a powernap 1 2>/dev/null && echo "✅ Power nap enabled"
-    sudo pmset -a displaysleep 10 2>/dev/null && echo "✅ Display sleep set to 10 minutes"
-    sudo pmset -a disksleep 10 2>/dev/null && echo "✅ Disk sleep enabled"
+    run_with_sudo pmset -a powernap 1 2>/dev/null && echo "✅ Power nap enabled"
+    run_with_sudo pmset -a displaysleep 10 2>/dev/null && echo "✅ Display sleep set to 10 minutes"
+    run_with_sudo pmset -a disksleep 10 2>/dev/null && echo "✅ Disk sleep enabled"
     
     echo "🎉 Battery optimization complete!"
 }

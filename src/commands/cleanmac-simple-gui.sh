@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # Safe Simple GUI Version
 clear
 echo 
@@ -41,9 +52,9 @@ while true; do
         1)
             echo "🚀 PERFORMANCE BOOST INITIATED"
             echo "=========================================="
-            sudo purge
+            run_with_sudo purge
             echo "✅ Memory purged"
-            sudo dscacheutil -flushcache
+            run_with_sudo dscacheutil -flushcache
             echo "✅ DNS cache cleared"
             ;;
         2)
@@ -52,8 +63,8 @@ while true; do
         3)
             echo "🧹 RUNNING DEEP CLEAN..."
             echo "=========================================="
-            rm -rf ~/Library/Caches/* 2>/dev/null
-            sudo rm -rf /Library/Caches/* 2>/dev/null
+            move_to_trash ~/Library/Caches/* 2>/dev/null
+            run_with_sudo move_to_trash /Library/Caches/* 2>/dev/null
             echo "✅ Deep cleanup completed!"
             ;;
         4)

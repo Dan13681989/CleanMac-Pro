@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # CleanMac Pro Fixed Version - Single level execution
 clear
 echo "=========================================="
@@ -34,15 +45,15 @@ while true; do
     case $choice in
         1)
             echo "🧹 Running quick cleanup..."
-            sudo rm -rf /private/var/folders/* 2>/dev/null
-            sudo purge
+            run_with_sudo move_to_trash /private/var/folders/* 2>/dev/null
+            run_with_sudo purge
             echo "✅ Quick cleanup completed!"
             ;;
         2)
             echo "🚀 Boosting performance..."
-            sudo purge
-            sudo dscacheutil -flushcache
-            sudo killall -HUP mDNSResponder
+            run_with_sudo purge
+            run_with_sudo dscacheutil -flushcache
+            run_with_sudo killall -HUP mDNSResponder
             echo "✅ Performance boosted!"
             ;;
         3)

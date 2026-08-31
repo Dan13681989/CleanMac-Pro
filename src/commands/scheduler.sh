@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # CleanMac Pro Scheduler - Automated Maintenance
 
 setup_daily_maintenance() {
@@ -40,7 +51,7 @@ quick_clean() {
     # Quick cache cleanup
     find ~/Library/Caches -type f -atime +1 -delete 2>/dev/null
     # Clear logs
-    sudo log show --info --last 1d | grep -v "com.apple" > /dev/null
+    run_with_sudo log show --info --last 1d | grep -v "com.apple" > /dev/null
     echo "✅ Quick cleanup completed"
 }
 

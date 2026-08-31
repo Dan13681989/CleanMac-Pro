@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # CleanMac Pro AI Optimizer - Fixed for macOS
 
 ai_performance_scan() {
@@ -56,18 +67,18 @@ smart_optimize() {
     # Adaptive optimization strategy using bc for comparison
     if command -v bc >/dev/null 2>&1 && [ $(echo "$cpu_usage > 70" | bc -l) -eq 1 ]; then
         echo "🔴 High CPU detected - aggressive optimization"
-        sudo purge 2>/dev/null
-        sudo dscacheutil -flushcache
-        sudo killall -HUP mDNSResponder
+        run_with_sudo purge 2>/dev/null
+        run_with_sudo dscacheutil -flushcache
+        run_with_sudo killall -HUP mDNSResponder
         echo "✅ Aggressive memory and DNS optimization applied"
     elif [ "$memory_free" -lt 25 ]; then
         echo "🟡 Low memory detected - memory-focused optimization"
-        sudo purge 2>/dev/null
+        run_with_sudo purge 2>/dev/null
         echo "✅ Memory optimization applied"
     else
         echo "🟢 System healthy - standard optimization"
-        sudo dscacheutil -flushcache
-        sudo killall -HUP mDNSResponder
+        run_with_sudo dscacheutil -flushcache
+        run_with_sudo killall -HUP mDNSResponder
         echo "✅ Standard optimization applied"
     fi
     

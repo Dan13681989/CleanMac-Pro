@@ -1,4 +1,15 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse --json flag
+JSON=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON=true; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
 # CleanMac Pro Health Dashboard
 
 generate_health_report() {
@@ -13,7 +24,7 @@ generate_health_report() {
     # CPU Health (25 points)
     echo "🖥️  CPU HEALTH:"
     cpu_usage=$(top -l 1 | grep "CPU usage" | awk '{print $3}' | tr -d '%')
-    cpu_temp=$(sudo powermetrics --samplers smc -n1 2>/dev/null | grep "CPU die temperature" | awk '{print $4}' || echo "N/A")
+    cpu_temp=$(run_with_sudo powermetrics --samplers smc -n1 2>/dev/null | grep "CPU die temperature" | awk '{print $4}' || echo "N/A")
     echo "  Usage: $cpu_usage%"
     echo "  Temperature: $cpu_temp"
     
