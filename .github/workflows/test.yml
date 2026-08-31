@@ -1,0 +1,17 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, refactor/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bats
+        run: brew install bats-core
+      - name: Run tests
+        run: bats test/
