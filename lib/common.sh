@@ -74,6 +74,21 @@ json_output() {
     fi
 }
 
-# Init
-load_config
+# Common argument parser
+parse_common_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --json) JSON=true; shift ;;
+            --dry-run) DRY_RUN=true; shift ;;
+            *) break ;;
+        esac
+    done
+    export JSON
+    export DRY_RUN
+}
+
+# Init – only if not in test mode
+if [[ -z "$SKIP_CONFIG" ]]; then
+    load_config
+fi
 DEBUG="${DEBUG:-false}"
