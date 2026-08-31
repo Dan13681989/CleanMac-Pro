@@ -18,8 +18,10 @@ log_debug() { [[ "${DEBUG}" == "true" ]] && echo -e "${BLUE}[DEBUG]${NC} $*" >&2
 
 # Config
 load_config() {
-    local config_file="${HOME}/.cleanmac/config"
-    [[ -f "$config_file" ]] && source "$config_file"
+    if [[ -z "$SKIP_CONFIG" ]]; then
+        local config_file="${HOME}/.cleanmac/config"
+        [[ -f "$config_file" ]] && source "$config_file"
+    fi
 }
 
 # Dry-run & safety
@@ -75,7 +77,10 @@ json_output() {
 }
 
 # Init
-load_config
+# Only load config if not in test mode
+if [[ -z "$SKIP_CONFIG" ]]; then
+    load_config
+fi
 DEBUG="${DEBUG:-false}"
 
 # ------------------------------
