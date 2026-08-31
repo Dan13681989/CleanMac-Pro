@@ -77,3 +77,18 @@ json_output() {
 # Init
 load_config
 DEBUG="${DEBUG:-false}"
+
+# ------------------------------
+# Common argument parser (--json and --dry-run)
+# ------------------------------
+parse_common_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --json) JSON=true; shift ;;
+            --dry-run) DRY_RUN=true; shift ;;
+            *) break ;;
+        esac
+    done
+    export JSON
+    export DRY_RUN
+}

@@ -1,16 +1,31 @@
 #!/usr/bin/env bash
-# ============================================================
-# CleanMac-Pro Main Router
-# ============================================================
-# Usage: cleanmac [subcommand] [options]
-# Subcommands: clean, analyze, network, security, docker, etc.
-# ============================================================
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks to get the real script path
+if command -v realpath &>/dev/null; then
+    SCRIPT_PATH="$(realpath "$0")"
+elif command -v readlink &>/dev/null; then
+    SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+else
+    SCRIPT_PATH="$0"
+fi
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 COMMANDS_DIR="$SCRIPT_DIR/src/commands"
 
-# Source the shared library for logging
+# Source shared library
 source "$SCRIPT_DIR/lib/common.sh"
+
+# Parse global options (--json and --dry-run)
+JSON="false"
+DRY_RUN="false"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json) JSON="true"; shift ;;
+        --dry-run) DRY_RUN="true"; shift ;;
+        *) break ;;
+    esac
+done
+export JSON
+export DRY_RUN
+
 
 # Show usage if no arguments
 if [[ $# -eq 0 ]]; then
@@ -31,19 +46,16 @@ fi
 
 SUBCOMMAND="$1"
 shift
+# Build argument list with global options
+ARGS=()
+[[ "$JSON" == "true" ]] && ARGS+=("--json")
+[[ "$DRY_RUN" == "true" ]] && ARGS+=("--dry-run")
+ARGS+=("$@")
 
-# Find the script (exact match for the basename)
 SCRIPT_PATH="$COMMANDS_DIR/${SUBCOMMAND}.sh"
 if [[ ! -f "$SCRIPT_PATH" ]]; then
-    # Try with a dash prefix? e.g., clean -> cleanmac-clean? No, we moved all to exact names.
-    # We could also look for a script that starts with the subcommand, but we'll keep it simple.
     log_error "Unknown subcommand: '$SUBCOMMAND'"
-    log_info "Run '$0' without arguments to see available commands."
     exit 1
 fi
-
-# Make sure it's executable
 chmod +x "$SCRIPT_PATH" 2>/dev/null
-
-# Execute the script, passing the remaining arguments
-exec "$SCRIPT_PATH" "$@"
+exec "$SCRIPT_PATH" "${ARGS[@]}"

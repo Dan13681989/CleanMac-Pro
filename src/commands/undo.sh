@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../../lib/common.sh"
+# Parse common args
+parse_common_args "$@"
 
 TRASH_DIR="$HOME/.cleanmac/trash"
 MANIFEST="$TRASH_DIR/manifest.log"
