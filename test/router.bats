@@ -8,7 +8,7 @@
 
 @test "cleanmac.sh lists subcommands" {
   run ./cleanmac.sh
-  [[ "$output" == *"schedule"* ]] || [[ "$output" == *"cleanup"* ]]
+  [[ "$output" == *"schedule"* ]] || [[ "$output" == *"undo"* ]]
 }
 
 @test "cleanmac.sh unknown subcommand returns error" {
@@ -17,7 +17,7 @@
   [[ "$output" == *"Unknown subcommand"* ]]
 }
 
-@test "a subcommand (cleanup) runs without error (or shows usage)" {
-  run ./cleanmac.sh cleanup --help
+@test "a subcommand (undo) runs without error (or shows usage)" {
+  run ./cleanmac.sh undo --auto
   [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
 }
