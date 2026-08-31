@@ -18,10 +18,8 @@ log_debug() { [[ "${DEBUG}" == "true" ]] && echo -e "${BLUE}[DEBUG]${NC} $*" >&2
 
 # Config
 load_config() {
-    if [[ -z "$SKIP_CONFIG" ]]; then
-        local config_file="${HOME}/.cleanmac/config"
-        [[ -f "$config_file" ]] && source "$config_file"
-    fi
+    local config_file="${HOME}/.cleanmac/config"
+    [[ -f "$config_file" ]] && source "$config_file"
 }
 
 # Dry-run & safety
@@ -77,23 +75,5 @@ json_output() {
 }
 
 # Init
-# Only load config if not in test mode
-if [[ -z "$SKIP_CONFIG" ]]; then
-    load_config
-fi
+load_config
 DEBUG="${DEBUG:-false}"
-
-# ------------------------------
-# Common argument parser (--json and --dry-run)
-# ------------------------------
-parse_common_args() {
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --json) JSON=true; shift ;;
-            --dry-run) DRY_RUN=true; shift ;;
-            *) break ;;
-        esac
-    done
-    export JSON
-    export DRY_RUN
-}
