@@ -1,5 +1,6 @@
 #!/usr/bin/env bats
 
+export SKIP_CONFIG=1
 load "$BATS_TEST_DIRNAME/../lib/common.sh"
 
 @test "log_info prints with [INFO]" {
