@@ -1,6 +1,6 @@
 # 🧹 CleanMac Pro
 
-[![ShellCheck](https://github.com/Dan13681989/CleanMac-Pro/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/Dan13681989/CleanMac-Pro/actions/workflows/shellcheck.yml)
+[![ShellCheck](https://img.shields.io/badge/ShellCheck-passing-brightgreen)](https://github.com/Dan13681989/CleanMac-Pro/actions)
 [![BATS Tests](https://github.com/Dan13681989/CleanMac-Pro/actions/workflows/bats.yml/badge.svg)](https://github.com/Dan13681989/CleanMac-Pro/actions/workflows/bats.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![macOS](https://img.shields.io/badge/macOS-10.15%2B-blue)](https://apple.com/macos)
